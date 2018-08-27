@@ -10,6 +10,7 @@ input/*
 # input/*_car2go_max-time500.csv
 # input/*_car2go_plates_appeareance_obj.pkl
 # input/*_config.txt
+*.pyc
 input/bookings_*
 Old_Stuff/*
 output*/*
