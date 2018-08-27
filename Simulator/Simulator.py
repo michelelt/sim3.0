@@ -66,7 +66,7 @@ def ParkCar(RechargingStation_Zones, DistancesFrom_Zone_Ordered, ZoneID_Zone, Bo
     if(BestEffort
        and BookingEndPosition in RechargingStation_Zones
        and Lvl <= upperTankThreshold
-       and p >= pThreshold):
+       and pThreshold >= p):
 
         DistanceI = DistancesFrom_Zone_Ordered[BookingEndPosition][0]        
         Distance = DistanceI[1].getDistance()
