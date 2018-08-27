@@ -1,0 +1,7 @@
+Provider Policy Algorithm Zones Acs TankThreshold WalkingThreshold TypeS TypeE AvgWalkedDistance MedianWalkedDistance AvgWalkedDistanceGlobal MedianWalkedDistanceGlobal AvgSOC MedianSOC AmountRecharge AmountRechargeForced AmountRechargeForcedFail AmountRechargeBestEffort AmountRechargePerc AvgTimeInStation MedianTimeInStation Deaths Reroute ReroutePerc ReroutePercofRecharge
+enjoy Hybrid max-time 20 6 50 1000000 96245 96245 1706.57 1549.00 13.83 0.00 83.89 87.36 10756 883 0 9873 11.18 11771.50 4112.00 0 780 0.81 7.25
+enjoy Hybrid max-time 30 6 50 1000000 96245 96245 1718.70 1549.00 5.07 0.00 87.55 90.76 15343 335 0 15008 15.94 8520.33 3124.00 0 284 0.30 1.85
+enjoy Hybrid max-time 60 6 50 1000000 96245 96245 1791.25 1775.00 0.07 0.00 93.40 95.23 30832 6 0 30826 32.03 7683.87 2681.00 0 4 0.00 0.01
+enjoy Hybrid max-time 10 6 50 1000000 96245 96245 2009.83 1844.00 33.79 0.00 80.16 82.93 7545 1715 0 5830 7.84 9116.78 3355.00 0 1618 1.68 21.44
+enjoy Hybrid max-time 40 6 50 1000000 96245 96245 1620.51 1549.00 1.53 0.00 89.95 92.73 19607 118 0 19489 20.37 8370.79 2924.00 0 91 0.09 0.46
+enjoy Hybrid max-time 50 6 50 1000000 96245 96245 1852.67 1847.00 0.23 0.00 92.83 94.81 28168 14 0 28154 29.27 7408.66 2658.00 0 12 0.01 0.04

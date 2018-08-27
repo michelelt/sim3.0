@@ -1,0 +1,27 @@
+events/*
+input/*
+!input/car2go_oper_areas_limits.csv
+!input/pickleAnalyzer.py
+# input/*_car2go_ValidZones.csv
+# input/*_car2go_ZoneCars.p
+# input/*_car2go_ZoneDistances.p
+# input/*_car2go_avg-time500.csv
+# input/*_car2go_max-parking500.csv
+# input/*_car2go_max-time500.csv
+# input/*_car2go_plates_appeareance_obj.pkl
+# input/*_config.txt
+input/bookings_*
+Old_Stuff/*
+output*/*
+fig*/*
+__pycache__/*
+.project
+.pydevproject
+./comandiDocker.pdf
+._*
+.bash*
+.ssh
+.gitignore.swp
+.idea
+
+
