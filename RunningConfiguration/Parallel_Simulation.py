@@ -81,8 +81,9 @@ def main():
     for i in range(2                       , round(maxZones*0.05) + 1, 1):  numberOfStations_list.append(i)
     for i in range(round(maxZones*0.05) + 2, round(maxZones*0.1)  + 1, 2): numberOfStations_list.append(i)
     # for i in range(round(maxZones*0.1)  + 2, round(maxZones*0.3)  + 1, 5): numberOfStations_list.append(i)
+    numberOfStations_list = [20]
     AvaiableChargingStations_list = [4] #PALINE PER ZONA
-    pThresholds = [0, 0.50]
+    pThresholds = [0.5]
     tankThresholds_list = [-1, 25]
     walkingTreshold = 1000000
     upperTankThreshold = [100]
@@ -124,7 +125,6 @@ def main():
 
 
     batcmd = 'ssh bigdatadb hadoop fs -ls /user/cocca/Simulator/output/' #Solo per controllare il ticket
-
     lastS = -1
     try:
         output = subprocess.check_output(batcmd, stderr=subprocess.STDOUT, shell=True)
@@ -196,7 +196,7 @@ def main():
 
 
     os.system('cp %s ../output/Simulation_%d/configuration.txt' %(SimulationConfigFile,lastS))
-    os.system('cat %s | ssh bigdatadb hdfs dfs -put -f - Simulator/output/Simulation_%s/configuration.txt' %(SimulationConfigFile,lastS))
+    # os.system('cat %s | ssh bigdatadb hdfs dfs -put -f - Simulator/output/Simulation_%s/configuration.txt' %(SimulationConfigFile,lastS))
 
     jobs=[]
 

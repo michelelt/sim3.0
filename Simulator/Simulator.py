@@ -98,7 +98,7 @@ def ParkCar(RechargingStation_Zones, DistancesFrom_Zone_Ordered, ZoneID_Zone, Bo
                         return Lvl, ToRecharge, Recharged, Distance, ZoneI.ID, Iter, p
 
 
-    #lascia la macchina senza attaccarla
+    #Park the car withouht plug it
     for DistanceI in DistancesFrom_Zone_Ordered[BookingEndPosition]:        
         RandomZones = DistanceI[1].getZones()
         for ZoneI_ID in RandomZones:       
@@ -146,6 +146,15 @@ def dict_to_string(myDict):
     outputString+="\n"
 
     return outputString
+
+# def ReroutedDischarge(event_coordinates, zone_coordinates):
+#     lon1 = event_coordinates[0]
+#     lat1 = event_coordinates[1]
+#     lon2 = zone_coordinates[0]
+#     lon2 = zone_coordinates[1]
+#
+#     distance = sf.haversine(lon1, lat1, lon2, lat2)
+#     consumption =
 
 
 def RunSim(BestEffort,
@@ -282,9 +291,40 @@ def RunSim(BestEffort,
                     ActualBooking -=1
                     BookedCar = BookingID_Car[Event.id_booking]
                     Discarge, TripDistance = BookedCar.Discharge(Event.coordinates)
+
                     Lvl, ToRecharge, Recharged, Distance, ZoneID, Iter, extractedP = ParkCar(RechargingStation_Zones,DistancesFrom_Zone_Ordered,ZoneID_Zone,\
                                                                            BookingEndPosition, BookedCar, tankThreshold, walkingTreshold, BestEffort,\
                                                                            upperTankThreshold, pThreshold)
+
+
+                    #extra consuption if there is rerouting
+                    if Distance > 0:
+                        print("-------------------------")
+                        BookedCar.setStartPosition(Event.coordinates)
+                        DiscargeR, TripDistanceR = BookedCar.Discharge(sf.zoneIDtoCoordinates(ZoneID))
+                        Discarge += DiscargeR
+                        TripDistance += TripDistanceR
+                        '''
+                        Please notice that TripDistanceR > Distance because TripDistanceR keeps in account the corr. fact
+                        Distance is dist(centre_arrival_Zone, centre_leaving_zone), so in this distance is biased by an error of 150m
+                        '''
+                        # print("Distnace", Distance)
+                        # print("Discharge", Discarge)
+                        # print("DischargeR", DiscargeR)
+                        # print("TripDistance", TripDistance)
+                        # print("TripDistanceR", TripDistanceR)
+                        # print("check", sf.haversine(Event.coordinates[0],
+                        #                             Event.coordinates[1],
+                        #                             sf.zoneIDtoCoordinates(ZoneID)[0],
+                        #                             sf.zoneIDtoCoordinates(ZoneID)[1]
+                        #                             )*gv.CorrectiveFactor
+                        # )
+                        # print("-------------------------")
+
+
+
+
+
                     BookedCar.setStartRecharge(Stamp)
                     ID = BookedCar.getID()
                     del BookingID_Car[Event.id_booking]

@@ -30,6 +30,8 @@ class Car(object):
         self.FirstRental = 0
         self.kwh = 2
 
+
+
     def setRechKwh(self, kwh): self.kwh = kwh
 
     def getRechKwh(self): return self.kwh
@@ -41,9 +43,9 @@ class Car(object):
         return
 
     def setStartPosition(self, BookingStarting_Position):
-        
+
         self.StartBookingPosition = BookingStarting_Position
-        
+
         return
 
     def setStartRecharge(self, StartRecharge):
