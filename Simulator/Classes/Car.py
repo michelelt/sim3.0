@@ -29,6 +29,8 @@ class Car(object):
         self.StartBookingPosition = 0 #posizione
         self.FirstRental = 0
         self.kwh = 2
+        self.cut_hour_perc = 0.7
+        self.reduction_factor_kwh = 0.1
 
 
 
@@ -62,6 +64,17 @@ class Car(object):
         starting_value = self.BatteryCurrentCapacity
         duration = (CurrentStamp-self.StartRecharge)/(60.0*60.0) #in hour
         delta_c = duration * kw
+
+
+        # '''recharge linear to 0-70 %, unlinear from 70 to 100'''
+        # max_supply_h = self.BatteryMaxCapacity/self.kwh
+        # if duration > max_supply_h
+        #     a =  self.cut_hout_perc * max_supply_h * self.kwh
+        #     b = (duration/max_supply_h - self.cut_hout_perc * max_supply_h/max_supply_h)  *  (self.reduction_factor_kwh * self.kwh)
+        #     delta_c = a + b
+        # else
+        #     delta_c = duration * kw
+
         #str_out = str(self.BatteryCurrentCapacity)+ "_"+str(duration)+"_"+str(delta_c)+"_"+str(self.BatteryMaxCapacity)
 
         if (self.BatteryCurrentCapacity + delta_c <= self.BatteryMaxCapacity):
