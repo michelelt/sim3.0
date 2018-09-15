@@ -32,18 +32,18 @@ def validSimulation(BestEffort, tankThreshold_valid, upperTankThreshold_valid, p
    if BestEffort==False and tankThreshold_valid==-1 :
        return False
 
-   #Needed only p = 0, utt=100
+   #Needed only p = 100, utt=100
    if BestEffort == False \
        and tankThreshold_valid >= 0 \
        and tankThreshold_valid < 100 \
-       and (pThresholdCheck != 0.0 or upperTankThreshold_valid != 100) :
+       and (pThresholdCheck != 100 or upperTankThreshold_valid != 100) :
        #print(BestEffort, tankThreshold, p, upperTankThreshold)
        return False
 
-   ##free Floating only utt=100 and p=0
+   ##free Floating only utt=100 and p=100
    if BestEffort == True \
        and tankThreshold_valid == -1 \
-       and (upperTankThreshold_valid != 100 or pThresholdCheck != 0.0) :
+       and (upperTankThreshold_valid != 100 or pThresholdCheck != 100) :
        #print(BestEffort, tankThreshold, p, upperTankThreshold)
        return False
 
@@ -66,24 +66,18 @@ def main():
     '''
     RUNNING CONFIGURATION
     '''
-    
-    '''BestEffort_list = [True,False]
-    AvaiableChargingStations_list = [2,4,6]
-    algorithm_list = ["rnd","max-parking"]
-    numberOfStations_list = [10,15,20,30,40,50,70,100]
-    tankThresholds_list = [-1,5,10,25,50,75,100]
-    walkingTreshold = 1000000#int(sys.argv[4]) # in [m]'''
 
     BestEffort_list = [False, True]
     algorithm_list = ["max-parking"]
     numberOfStations_list = []
     maxZones = numeberOfZones(gv.city)
-    for i in range(2                       , round(maxZones*0.05) + 1, 1):  numberOfStations_list.append(i)
-    for i in range(round(maxZones*0.05) + 2, round(maxZones*0.1)  + 1, 2): numberOfStations_list.append(i)
+    # for i in range(2                       , round(maxZones*0.05) + 1, 1):  numberOfStations_list.append(i)
+    # for i in range(round(maxZones*0.05) + 2, round(maxZones*0.1)  + 1, 2): numberOfStations_list.append(i)
     # for i in range(round(maxZones*0.1)  + 2, round(maxZones*0.3)  + 1, 5): numberOfStations_list.append(i)
-    numberOfStations_list = [20]
+    for i in range(2, round(maxZones*0.3), 2): numberOfStations_list.append(i)
+
     AvaiableChargingStations_list = [4] #PALINE PER ZONA
-    pThresholds = [0.5]
+    pThresholds = [0.25, 0.5, 0.75, 1]
     tankThresholds_list = [-1, 25]
     walkingTreshold = 1000000
     upperTankThreshold = [100]
