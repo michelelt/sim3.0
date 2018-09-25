@@ -26,7 +26,9 @@ zonesMetrics = pd.read_csv("../input/"+gv.provider+"_ValidZones.csv")
 
 
 def printMatrix(xynew):
-
+    '''
+    function which prints the zones with a charging station
+    '''
     print ("R:", gv.NRows, "C:", gv.NColumns)
     matrix={}
     for row in range(gv.NRows):
@@ -35,11 +37,6 @@ def printMatrix(xynew):
             matrix[row][col] = " "
 
     for id in zonesMetrics["id"]:
-        # if id == 689:
-        #     print ("caselle beccata")
-        #     couple = sf.zoneIDtoMatrixCoordinates(id)
-        #     print(couple)
-        #     matrix[couple[2]][couple[1]] = 'C'
         couple = sf.zoneIDtoMatrixCoordinates(id)
         matrix[couple[2]][couple[1]] = '\''
     for k in xynew.keys():
@@ -62,6 +59,10 @@ def printMatrix(xynew):
     return
 
 def exploreNeighbours():
+    '''
+    extract a random index to chose which is the station to move
+    :return: logical coordinates of NESW zones, NESW direction, logical index of the zone
+    '''
     xynew = {}
     direction = {}
     myindex=np.random.randint(len(RechargingStation_Zones), size = 1)[0]
@@ -69,7 +70,7 @@ def exploreNeighbours():
     retv = sf.zoneIDtoMatrixCoordinates(ID)
     xy= [retv[1],retv[2]]
 
-    max=2
+    max=2 ## increment to have more choicee
     i=0
     for dst in range(1,max):
         xynew[i]=[xy[0]-dst, xy[1]]
@@ -83,16 +84,26 @@ def exploreNeighbours():
 
         xynew[i+3]=[xy[0], xy[1]+dst]
         direction[i+3] = [3, xy[0], xy[1]+dst]
-        i=i+1
+        i=i+4
     # print("expNeigh - dir", direction)
     # print()
     return xynew, direction, myindex
 
+def solution_already_exists(new_sol, tested_sol)
+    new_sol_str =  str(sorted(new_sol))
+    return new_sol_str in tested_sol.keys()
 
 
-def exploreDirection(directionToFollow):
+
+
+def exploreDirection(directionToFollow, tested_solution):
+    '''
+    :param directionToFollow: direction to follow (composed by the logical coordinates)
+    :return: set of solutions, starting index
+
+    add all the zones in a given direcation until the border
+    '''
     center = [directionToFollow[1], directionToFollow[2]]
-    # print(center)
     i = 0
     xynew = {}
     direction = {}
@@ -100,7 +111,7 @@ def exploreDirection(directionToFollow):
         # print("East")
         while True :
             # print("MC2ID E", MatrixCoordinatesToID(center[0]-(i+1), center[1]))
-            if MatrixCoordinatesToID(center[0]-(i+1), center[1]) not in zonesMetrics.id:
+            if MatrixCoordinatesToID(center[0]-(i+1), center[1]) not in zonesMetrics.id :
                 return xynew, direction
             xynew[i] = [center[0]-(i+i), center[1]]
             direction[i] = [directionToFollow[0], center[0]-(i+i), center[1]]
@@ -149,6 +160,11 @@ def copyFileFromServer(provider, policy, algorithm, numberOfStations, acs, tt, w
 
 
 def main(par_numberOfStations):
+    '''
+
+    :param par_numberOfStations: #CS placed in the city
+    :return: the optimal CS placement
+    '''
     iniTimeSim = datetime.datetime.now()
     ##TO AVOID: "OSError: [Errno 24] Too many open files"
     # bashCommand = "ulimit -n 32768"
@@ -168,9 +184,13 @@ def main(par_numberOfStations):
     utt = 100
     pThreshold = 0.5
     randomInitLvl = False
-   
 
-    batcmd = 'ssh bigdatadb hadoop fs -ls /user/cocca/Simulator/output/' #Solo per controllare il ticket
+    tested_solution = {}
+
+   '''
+   Bigdata db setup 
+   '''
+    batcmd = 'ssh bigdatadb hadoop fs -ls /user/cocca/Simulator/output/'
     try:
         output = subprocess.check_output(batcmd, stderr=subprocess.STDOUT, shell=True)
     except subprocess.CalledProcessError as e:
@@ -179,13 +199,19 @@ def main(par_numberOfStations):
             print("ERROR: Kerberos Token not present. \n \
             Please log in the bigdata server to request kerberos Token")
             exit(-1)
-            
-    lastS = c2id[city]
 
+    '''
+    Download of one simulation, can be commented
+    '''
+    lastS = c2id[city]
     copyFileFromServer(gv.provider, "Hybrid", algorithm, numberOfStations, str(4),
                        str(25), walkingTreshold, str(100), str(int(pThreshold*100)), str(lastS))
 
 
+
+    '''
+    Trace, city config and CS placement upload
+    '''
     a = datetime.datetime.now()
     Stamps_Events = pickle.load( open( "../events/"+ gv.provider+"_sorted_dict_events_obj.pkl", "rb" ) )
     b = datetime.datetime.now()
@@ -203,9 +229,6 @@ def main(par_numberOfStations):
     a = datetime.datetime.now()
     global RechargingStation_Zones
     RechargingStation_Zones = sf.loadRecharing(algorithm, numberOfStations)
-    # for element in RechargingStation_Zones:
-    #     if element not in list(zonesMetrics.id):
-    #         print(element, "not present")
     b = datetime.datetime.now()
     c = (b - a).total_seconds()
     print("End Load Recharging: "+str(int(c)))
@@ -220,19 +243,25 @@ def main(par_numberOfStations):
     results = ""
     k=0
     step=0
+    AWD_impr_perc = 100
     manager = multiprocessing.Manager()
 
     global followDirection
     followDirection = False
 
-
-    while step <=1e3:
+    '''
+    optmization
+    '''
+    while step <=1e3 or AWD_impr_perc <=0.1:
         return_dict = manager.dict()
 
         if step % 100 == 0:
             print("Iteration #", step)
 
         if followDirection == True :
+            '''
+            If the algorithm has a direction to follow, follow that direction
+            '''
             # print ("In FD")
             xynew, direction = exploreDirection(directionToFollow)
             if len(xynew) == 0 :
@@ -240,19 +269,27 @@ def main(par_numberOfStations):
                 ## On the board, No exploring in depth
                 xynew , direction, myindex = exploreNeighbours()
         else:
-            ## non c'è unq direzione da seguire, quindi prendo random
+            '''
+            If there is not any direction, explore some random direction point with the NSEW neighbors
+            '''
             # print(step, "not FD")
             xynew , direction, myindex = exploreNeighbours()
-
         # print("MyIndex:", myindex)
 
         IDn=-1
         RechargingStation_Zones_new = {}
+        '''
+        xynew contains the ID + logical coordniates of the station which is going to be changed in the CSplacement
+        explore xynew to create a new CSP
+        check the if the solution was not already tested
+        '''
         for k in range(0,len(xynew)):
             IDn = MatrixCoordinatesToID(xynew[k][0], xynew[k][1])
             if IDn in zonesMetrics.id and IDn not in RechargingStation_Zones :
                 RechargingStation_Zones_new[k]=RechargingStation_Zones.copy()
                 RechargingStation_Zones_new[k][myindex] = IDn
+                if solution_already_exists(str(sorted(RechargingStation_Zones_new[k][myindex])), tested_solution) == True
+                    k=k-1
 
         for i in RechargingStation_Zones_new:
             # print("RSZ_new",i, RechargingStation_Zones_new[i])
@@ -282,16 +319,28 @@ def main(par_numberOfStations):
             proc.join()
 
         followDirection = False
+
+        '''
+        Results analysis
+        '''
         for val in return_dict.values():
 
             new_results = val
             # print("PID:", new_results["ProcessID"], "Dir:",new_results["Direction"])
             # print("\nNEW STEP")
             # print(RechargingStation_Zones_new[int(new_results["ProcessID"])])
-            
+
+            '''
+            Optimality condition
+            if results (previous solution) is empity or the optimality condtion is true
+            A direction to follow has been found,
+                saving solutions
+            '''
             if results == "" or \
                         (new_results["PercDeath"] <= results["PercDeath"]
                      and new_results["MeanMeterEnd"] < results["MeanMeterEnd"]):
+
+                AWD_impr_perc = new_results['MeanMeterEnd']*100/results['MeanMeterEnd']
 
                 followDirection = True
                 directionToFollow = new_results["Direction"]
@@ -322,25 +371,12 @@ def main(par_numberOfStations):
                 print(RechargingStation_Zones)
                 print(results)
 
+                AWD_impr_perc = ()
+
 
         step+=1
     print(str(1e3), "Iteration done in", (datetime.datetime.now() - iniTimeSim)/60, "minutes")
 
-
-
-    #PercRerouteEnd, PercRerouteStart, PercRecharge,PercDeath, MedianMeterEnd, MeanMeterEnd, MedianMeterStart, MeanMeterStart, NEnd, NStart = \
-    #        RunSim(algorithm,numberOfStations,tankThreshold,walkingTreshold,ZoneCars,Stamps_Events,RechargingStation_Zones,DistancesFrom_Zone_Ordered)
-
-    #print("PercRerouteEnd, PercRerouteStart, PercRecharge, PercDeath, MedianMeterEnd, MeanMeterEnd, MedianMeterStart, MeanMeterStart, NEnd, NStart")
-    #print(PercRerouteEnd, PercRerouteStart, PercRecharge,PercDeath, MedianMeterEnd, MeanMeterEnd, MedianMeterStart, MeanMeterStart, NEnd, NStart)
-
-    #PercRerouteEnd, PercRerouteStart, PercRecharge,PercDeath, MedianMeterEnd, MeanMeterEnd, MedianMeterStart, MeanMeterStart, NEnd, NStart = \
-    #        RunSim(algorithm,numberOfStations,tankThreshold,walkingTreshold,ZoneCars,Stamps_Events,RechargingStation_Zones,DistancesFrom_Zone_Ordered)
-
-    #print("PercRerouteEnd, PercRerouteStart, PercRecharge, PercDeath, MedianMeterEnd, MeanMeterEnd, MedianMeterStart, MeanMeterStart, NEnd, NStart")
-    #print(PercRerouteEnd, PercRerouteStart, PercRecharge,PercDeath, MedianMeterEnd, MeanMeterEnd, MedianMeterStart, MeanMeterStart, NEnd, NStart)
-
-jobs=[]
 
 jobs=[]
 # for noz in [12,13,14,15,17,19,21,23,25]

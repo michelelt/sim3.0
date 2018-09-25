@@ -299,7 +299,6 @@ def RunSim(BestEffort,
 
                     #extra consuption if there is rerouting
                     if Distance > 0:
-                        print("-------------------------")
                         BookedCar.setStartPosition(Event.coordinates)
                         DiscargeR, TripDistanceR = BookedCar.Discharge(sf.zoneIDtoCoordinates(ZoneID))
                         Discarge += DiscargeR
