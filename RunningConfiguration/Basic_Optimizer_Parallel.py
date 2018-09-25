@@ -16,13 +16,13 @@ import subprocess
 
 import Simulator.Globals.SupportFunctions as sf
 import Simulator.Globals.GlobalVar as gv
+city = 'Torino'
 gv.init()
-sf.assingVariables()
+sf.assingVariables(city)
 import pprint
 pp = pprint.PrettyPrinter(indent=4)
-
 c2id = {"Vancouver":6, "Torino":7, "Berlino":10, "Milano":9}
-zonesMetrics = pd.read_csv("../input/"+gv.provider+"_ValidZones.csv")
+zonesMetrics = pd.read_csv("../input/"+ city + "_" +gv.provider+"_ValidZones.csv")
 
 
 def printMatrix(xynew):
@@ -89,14 +89,14 @@ def exploreNeighbours():
     # print()
     return xynew, direction, myindex
 
-def solution_already_exists(new_sol, tested_sol)
+def solution_already_exists(new_sol, tested_sol):
     new_sol_str =  str(sorted(new_sol))
     return new_sol_str in tested_sol.keys()
 
 
 
 
-def exploreDirection(directionToFollow, tested_solution):
+def exploreDirection(directionToFollow):
     '''
     :param directionToFollow: direction to follow (composed by the logical coordinates)
     :return: set of solutions, starting index
@@ -161,7 +161,6 @@ def copyFileFromServer(provider, policy, algorithm, numberOfStations, acs, tt, w
 
 def main(par_numberOfStations):
     '''
-
     :param par_numberOfStations: #CS placed in the city
     :return: the optimal CS placement
     '''
@@ -187,15 +186,18 @@ def main(par_numberOfStations):
 
     tested_solution = {}
 
-   '''
-   Bigdata db setup 
-   '''
-    batcmd = 'ssh bigdatadb hadoop fs -ls /user/cocca/Simulator/output/'
+    '''
+    Bigdata db setup 
+    '''
+    batcmd = 'ssh bigdatadb hadoop fs -ls /user/cocca/Simulator/output/' #Solo per controllare il ticket
+    lastS = -1
     try:
         output = subprocess.check_output(batcmd, stderr=subprocess.STDOUT, shell=True)
+        if(len(str(output))<5): lastS = 0
+        else: lastS = int(str(output).split(" ")[1]) + 1
     except subprocess.CalledProcessError as e:
         output = e.output
-        if("Kerberos" in str(output)): 
+        if("Kerberos" in str(output)):
             print("ERROR: Kerberos Token not present. \n \
             Please log in the bigdata server to request kerberos Token")
             exit(-1)
@@ -203,32 +205,31 @@ def main(par_numberOfStations):
     '''
     Download of one simulation, can be commented
     '''
-    lastS = c2id[city]
-    copyFileFromServer(gv.provider, "Hybrid", algorithm, numberOfStations, str(4),
-                       str(25), walkingTreshold, str(100), str(int(pThreshold*100)), str(lastS))
-
+    # lastS = c2id[city]
+    # copyFileFromServer(gv.provider, "Hybrid", algorithm, numberOfStations, str(4),
+    #                    str(25), walkingTreshold, str(100), str(int(pThreshold*100)), str(lastS))
 
 
     '''
     Trace, city config and CS placement upload
     '''
     a = datetime.datetime.now()
-    Stamps_Events = pickle.load( open( "../events/"+ gv.provider+"_sorted_dict_events_obj.pkl", "rb" ) )
+    Stamps_Events = pickle.load( open( "../events/"+ city + "_" + gv.provider+"_sorted_dict_events_obj.pkl", "rb" ) )
     b = datetime.datetime.now()
     c = (b - a).total_seconds()
     print("End Load Events: "+str(int(c)))
 
     a = datetime.datetime.now()
     global DistancesFrom_Zone_Ordered
-    DistancesFrom_Zone_Ordered = pickle.load( open( "../input/"+gv.provider+"_ZoneDistances.p", "rb" ) )
+    DistancesFrom_Zone_Ordered = pickle.load( open( "../input/"+ city + "_" +gv.provider+"_ZoneDistances.p", "rb" ) )
     b = datetime.datetime.now()
     c = (b - a).total_seconds()
     print("End Load Zones: "+str(int(c)))
-    ZoneCars = pickle.load( open( "../input/"+gv.provider+"_ZoneCars.p", "rb" ) )
+    ZoneCars = pickle.load( open( "../input/"+ city + "_" +gv.provider+"_ZoneCars.p", "rb" ) )
 
     a = datetime.datetime.now()
     global RechargingStation_Zones
-    RechargingStation_Zones = sf.loadRecharing(algorithm, numberOfStations)
+    RechargingStation_Zones = sf.loadRecharing(algorithm, numberOfStations, city)
     b = datetime.datetime.now()
     c = (b - a).total_seconds()
     print("End Load Recharging: "+str(int(c)))
@@ -288,7 +289,7 @@ def main(par_numberOfStations):
             if IDn in zonesMetrics.id and IDn not in RechargingStation_Zones :
                 RechargingStation_Zones_new[k]=RechargingStation_Zones.copy()
                 RechargingStation_Zones_new[k][myindex] = IDn
-                if solution_already_exists(str(sorted(RechargingStation_Zones_new[k][myindex])), tested_solution) == True
+                if solution_already_exists(str(sorted(RechargingStation_Zones_new[k])), tested_solution) == True :
                     k=k-1
 
         for i in RechargingStation_Zones_new:
@@ -306,10 +307,16 @@ def main(par_numberOfStations):
                                               lastS,
                                               utt,
                                               pThreshold,
+                                              2,
                                               randomInitLvl,
                                               return_dict,
                                               i,
-                                              direction[i]))
+                                              direction[i],
+                                              city))
+
+
+
+
             k+=1
             jobs.append(p)
             p.start()
@@ -340,7 +347,11 @@ def main(par_numberOfStations):
                         (new_results["PercDeath"] <= results["PercDeath"]
                      and new_results["MeanMeterEnd"] < results["MeanMeterEnd"]):
 
-                AWD_impr_perc = new_results['MeanMeterEnd']*100/results['MeanMeterEnd']
+                if results == "" :
+                    AWD_impr_perc = 100
+                else:
+                    AWD_impr_perc = 100 - (float(new_results['MeanMeterEnd'])*100/float(results['MeanMeterEnd']))
+                print (AWD_impr_perc)
 
                 followDirection = True
                 directionToFollow = new_results["Direction"]
@@ -381,7 +392,7 @@ def main(par_numberOfStations):
 jobs=[]
 # for noz in [12,13,14,15,17,19,21,23,25]
 # for noz in [2,3,4,5,6,7,8,9,10,11,12,13,14,15,17,19,21,23,25,27, 29, 31, 33, 35, 37, 39, 41]:
-for noz in [43,45,47,49,51,53]:
+for noz in [32]:
    main(noz)
    # jobs.append(p)
    # p.start()
