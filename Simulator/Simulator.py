@@ -51,7 +51,7 @@ def SearchNearestBestCar(RechargingStation_Zones,DistancesFrom_Zone_Ordered,Zone
     return -1, -1
 
 def ParkCar(RechargingStation_Zones, DistancesFrom_Zone_Ordered, ZoneID_Zone, BookingEndPosition,
-            BookedCar, tankThreshold, walkingTreshold, BestEffort, upperTankThreshold, pThreshold):
+            BookedCar, tankThreshold, walkingTreshold, BestEffort, pThreshold):
     
     ToRecharge = False
     Recharged = False
@@ -63,9 +63,10 @@ def ParkCar(RechargingStation_Zones, DistancesFrom_Zone_Ordered, ZoneID_Zone, Bo
 
     #Park in CS, and if policy is H, with the system P and UTT check
     #if the policy is FreeFloating, HybridParCondition is True -> parkings only in CS when hitted
+    #pThreshold == 0 -> park only Needed
+    #pThreshold == 100 -> hybrid
     if(BestEffort
        and BookingEndPosition in RechargingStation_Zones
-       and Lvl <= upperTankThreshold
        and pThreshold >= p):
 
         DistanceI = DistancesFrom_Zone_Ordered[BookingEndPosition][0]        
@@ -112,7 +113,7 @@ def ParkCar(RechargingStation_Zones, DistancesFrom_Zone_Ordered, ZoneID_Zone, Bo
 def WriteOutHeader(file, parametersDict):
     
     HeaderOreder = ["Provider", "Policy", "Algorithm", "ChargingStations", 
-     "AvaiableChargingStations", "TankThreshold", "WalkingTreshold", "upperTankThreshold",
+     "AvaiableChargingStations", "TankThreshold", "WalkingTreshold",
      "pThreshold"]
     
     for key in HeaderOreder:
@@ -168,7 +169,6 @@ def RunSim(BestEffort,
     Stamps_Events,
     DistancesFrom_Zone_Ordered,
     lastS,
-    upperTankThreshold,
     pThreshold,
     kwh,
     randomStrtingLevel,
@@ -180,10 +180,12 @@ def RunSim(BestEffort,
     gv.init()
     sf.assingVariables(city)
 
+    time_init = time.time()
+
     numberOfStations = len(RechargingStation_Zones)
 
     policy, fileID, fname = foutname(BestEffort,algorithmName,AvaiableChargingStations,numberOfStations,tankThreshold,
-                                     walkingTreshold, upperTankThreshold, pThreshold, kwh)
+                                     walkingTreshold, pThreshold, kwh)
 
 
 
@@ -226,7 +228,6 @@ def RunSim(BestEffort,
     "AvaiableChargingStations":AvaiableChargingStations, 
     "TankThreshold":tankThreshold,
     "WalkingTreshold":  walkingTreshold,
-    "upperTankThreshold": upperTankThreshold,
     "pThreshold": pThreshold,
     "kwh": kwh})
     
@@ -294,7 +295,7 @@ def RunSim(BestEffort,
 
                     Lvl, ToRecharge, Recharged, Distance, ZoneID, Iter, extractedP = ParkCar(RechargingStation_Zones,DistancesFrom_Zone_Ordered,ZoneID_Zone,\
                                                                            BookingEndPosition, BookedCar, tankThreshold, walkingTreshold, BestEffort,\
-                                                                           upperTankThreshold, pThreshold)
+                                                                           pThreshold)
 
 
                     #extra consuption if there is rerouting
@@ -410,6 +411,7 @@ def RunSim(BestEffort,
         RetValues["MeanMeterStart"] = MeanMeterStart
         RetValues["NEnd"] = NEnd
         RetValues["NStart"] = NStart
+        RetValues['WeightedWalkedDistance'] = (MeanMeterEnd * PercRerouteEnd + ((PercRecharge - PercRerouteEnd) * 150))/100
         return_dict[processID] = RetValues
 
     current_folder = os.getcwd().split("/")
@@ -418,7 +420,7 @@ def RunSim(BestEffort,
         output_folder += current_folder[i]+"/"
     output_folder+="output/"
 
-
+    print('PID %d, time: %d'%(processID, time.time()-time_init))
     #do not use
 	#os.system('ssh bigdatadb hdfs dfs -put /data/03/Carsharing_data/output/Simulation_%d/%s Simulator/output/Simulation_%d/%s &' %(lastS,fname,lastS,fname))
     #os.system('ssh bigdatadb cat /data/03/Carsharing_data/output/Simulation_%d/%s | hdfs dfs -put -f - Simulator/output/Simulation_%s/%s &' %(lastS,fname,lastS,fname))

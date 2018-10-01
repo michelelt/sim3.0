@@ -219,33 +219,41 @@ def numberOfZones(city):
 
 ###############################################################################
 
+def validSimulation(BestEffort, tankThreshold_valid, pThresholdCheck) :
 
-def validSimulation(BestEffort, tankThreshold_valid, upperTankThreshold_valid, pThresholdCheck) :
+   '''
 
-   #Station Based and IMP2
-    if tankThreshold_valid == 100:
-        return False
+   :param BestEffort: True -> car goes to park if ends trip in a CS
+   :param tankThreshold_valid: percentage of battery below with a car can recharge
+   :param pThresholdCheck: 0-> people charge only needed, 1 -> charge every time
+   :return:
+   '''
 
-    #IMP1
-    if BestEffort==False and tankThreshold_valid==-1 :
-        return False
+  #Station Based and IMP2
+   if tankThreshold_valid == 100:
+       return False
 
-    #Needed only p = 0, utt=100
-    if BestEffort == False \
-        and tankThreshold_valid >= 0 \
-        and tankThreshold_valid < 100 \
-        and (pThresholdCheck != 0.0 or upperTankThreshold_valid != 100) :
-        #print(BestEffort, tankThreshold, p, upperTankThreshold)
-        return False
+   #IMP1
+   if BestEffort==False and tankThreshold_valid==-1 :
+       return False
 
-    ##free Floating only utt=100 and p=0
-    if BestEffort == True \
-        and tankThreshold_valid == -1 \
-        and (upperTankThreshold_valid != 100 or pThresholdCheck != 0.0) :
-        #print(BestEffort, tankThreshold, p, upperTankThreshold)
-        return False
+   #Needed only p=0
+   if BestEffort == False \
+       and tankThreshold_valid >= 0 \
+       and tankThreshold_valid < 100 \
+       and pThresholdCheck != 0 :
+       #print(BestEffort, tankThreshold, p)
+       return False
 
-    return True
+   ##free Floating only and p=100
+   if BestEffort == True \
+       and tankThreshold_valid == -1 \
+       and pThresholdCheck != 100 :
+       #print(BestEffort, tankThreshold, p)
+       return False
+
+   return True
+
 
 ###############################################################################
 
@@ -399,7 +407,7 @@ def loadRecharing(method, numberOfStations, city):
     return Stations
 
 def foutname(BestEffort,algorithm,AvaiableChargingStations,numberOfStations,
-             tankThreshold,walkingTreshold, upperTankThreshold, pThreshold, kwh):
+             tankThreshold,walkingTreshold, pThreshold, kwh):
 
     foutname = ""
 
@@ -423,7 +431,6 @@ def foutname(BestEffort,algorithm,AvaiableChargingStations,numberOfStations,
              str(AvaiableChargingStations)+"_"+\
              str(tankThreshold) +"_"+\
              str(walkingTreshold) + "_" +\
-             str(upperTankThreshold) + "_" +\
              str(int(pThreshold*100)) + "_" +\
              str(int(kwh))
 

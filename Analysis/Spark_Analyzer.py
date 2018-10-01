@@ -7,7 +7,7 @@ import sys
 import collections
 import pickle
 
-header = ["Provider","Policy","Algorithm","Zones","Acs","TankThreshold","WalkingThreshold","upperTankThreshold", "pThreshold", "TypeS", "TypeE",
+header = ["Provider","Policy","Algorithm","Zones","Acs","TankThreshold","WalkingThreshold", "pThreshold", "TypeS", "TypeE",
           "kwh","AvgWalkedDistance","MedianWalkedDistance", "AvgWalkedDistanceGlobal", "MedianWalkedDistanceGlobal",
           "AvgSOC", "MedianSOC", "AmountRecharge","AmountRechargeForced","AmountRechargeForcedFail",
           "AmountRechargeBestEffort", "AmountRechargePerc", "AvgTimeInStation", "MedianTimeInStation",
@@ -28,7 +28,6 @@ def dict_to_tpl_str(s):
              int(s["Acs"]),
              int(s["TankThreshold"]),
              int(s["WalkingThreshold"]),
-             int(s["upperTankThreshold"]),
              float(s["pThreshold"]),
              float(s["kwh"])
     )
@@ -104,9 +103,8 @@ def mapf2(x):
     s["Acs"] = keysplit[4]
     s["TankThreshold"] = keysplit[5]
     s["WalkingThreshold"] = keysplit[6]
-    s["upperTankThreshold"] = keysplit[7]
-    s["pThreshold"] = keysplit[8]
-    s["kwh"] = keysplit[9]
+    s["pThreshold"] = keysplit[7]
+    s["kwh"] = keysplit[8]
 
     s["TypeS"] = len(df[df["Type"]=='s'])                            
     s["TypeE"] = len(df[df["Type"]=='e'])
