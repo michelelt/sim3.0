@@ -22,7 +22,15 @@ sf.assingVariables(city)
 
 from Check_and_run_missing import check_and_run_missing
 
-def validSimulation(BestEffort, tankThreshold_valid, upperTankThreshold_valid, pThresholdCheck) :
+def validSimulation(BestEffort, tankThreshold_valid, pThresholdCheck) :
+
+   '''
+
+   :param BestEffort: True -> car goes to park if ends trip in a CS
+   :param tankThreshold_valid: percentage of battery below with a car can recharge
+   :param pThresholdCheck: 0-> people charge only needed, 1 -> charge every time
+   :return:
+   '''
 
   #Station Based and IMP2
    if tankThreshold_valid == 100:
@@ -32,19 +40,19 @@ def validSimulation(BestEffort, tankThreshold_valid, upperTankThreshold_valid, p
    if BestEffort==False and tankThreshold_valid==-1 :
        return False
 
-   #Needed only p = 100, utt=100
+   #Needed only p=0
    if BestEffort == False \
        and tankThreshold_valid >= 0 \
        and tankThreshold_valid < 100 \
-       and (pThresholdCheck != 100 or upperTankThreshold_valid != 100) :
-       #print(BestEffort, tankThreshold, p, upperTankThreshold)
+       and pThresholdCheck != 0 :
+       #print(BestEffort, tankThreshold, p)
        return False
 
-   ##free Floating only utt=100 and p=100
+   ##free Floating only and p=100
    if BestEffort == True \
        and tankThreshold_valid == -1 \
-       and (upperTankThreshold_valid != 100 or pThresholdCheck != 100) :
-       #print(BestEffort, tankThreshold, p, upperTankThreshold)
+       and pThresholdCheck != 100 :
+       #print(BestEffort, tankThreshold, p)
        return False
 
    return True
@@ -67,20 +75,19 @@ def main():
     RUNNING CONFIGURATION
     '''
 
-    BestEffort_list = [False, True]
+    BestEffort_list = [True]
     algorithm_list = ["max-parking"]
-    numberOfStations_list = []
+    numberOfStations_list = [5,7,10,13,15,17,20]
     maxZones = numeberOfZones(gv.city)
     # for i in range(2                       , round(maxZones*0.05) + 1, 1):  numberOfStations_list.append(i)
     # for i in range(round(maxZones*0.05) + 2, round(maxZones*0.1)  + 1, 2): numberOfStations_list.append(i)
     # for i in range(round(maxZones*0.1)  + 2, round(maxZones*0.3)  + 1, 5): numberOfStations_list.append(i)
-    for i in range(2, round(maxZones*0.3), 2): numberOfStations_list.append(i)
+    # for i in range(2, round(maxZones*0.3), 2): numberOfStations_list.append(i)
 
     AvaiableChargingStations_list = [4] #PALINE PER ZONA
-    pThresholds = [0.25, 0.5, 0.75, 1]
-    tankThresholds_list = [-1, 25]
+    pThresholds = [0.5]
+    tankThresholds_list = [25]
     walkingTreshold = 1000000
-    upperTankThreshold = [100]
     randomInitLvl = False
     kwh_list = [2]
 
@@ -175,11 +182,6 @@ def main():
         str_out+= str(val)+" "
     str_out+= "\n"
 
-    str_out += "UpperTankThresholds: "
-    for val in upperTankThreshold:
-        str_out+= str(val)+" "
-    str_out+= "\n"
-
     str_out += "pThresholds: "
     for val in pThresholds:
         str_out+= str(val*100)+" "
@@ -200,67 +202,55 @@ def main():
                 print("Running simulations:")
                 for numberOfStations in numberOfStations_list:
                     for tankThreshold in tankThresholds_list:
-                        for utt in upperTankThreshold:
-                            for pt in pThresholds:
-                                for kwh in kwh_list:
+                        for pt in pThresholds:
 
-                                    for z in ZoneCars.keys():
-                                        if len(ZoneCars[z]) > 0:
-                                            for i in range (len(ZoneCars[z])):
-                                                ZoneCars[z][i].setRechKwh(kwh)
-
-                                    # for z in ZoneCars.keys():
-                                    #     if len(ZoneCars[z]) > 0:
-                                    #         for i in range (len(ZoneCars[z])):
-                                    #             print(ZoneCars[z][i].getRechKwh()   )
+                            for kwh in kwh_list:
+                                # for z in ZoneCars.keys():
+                                #     if len(ZoneCars[z]) > 0:
+                                #         for i in range (len(ZoneCars[z])):
+                                #             ZoneCars[z][i].setRechKwh(kwh)
 
 
 
-                                    if sf.validSimulation(BestEffort, tankThreshold, utt, pt) == False:
-                                        continue
-                                    RechargingStation_Zones = loadRecharing(algorithm, numberOfStations, city)
-                                    p = Process(target=RunSim,args = (BestEffort,
-                                                                      algorithm.replace("_","-"),
-                                                                      algorithm,
-                                                                      AvaiableChargingStations,
-                                                                      tankThreshold,
-                                                                      walkingTreshold,
-                                                                      ZoneCars,
-                                                                      RechargingStation_Zones,
-                                                                      Stamps_Events,
-                                                                      DistancesFrom_Zone_Ordered,
-                                                                      lastS,
-                                                                      utt,
-                                                                      pt,
-                                                                      kwh,
-                                                                      randomInitLvl,
-                                                                      None,
-                                                                      -1,
-                                                                      None,
-                                                                      city
-                                                                      ))
+                                if sf.validSimulation(BestEffort, tankThreshold, pt) == False:
+                                    continue
+                                RechargingStation_Zones = loadRecharing(algorithm, numberOfStations, city)
+                                p = Process(target=RunSim,args = (BestEffort,
+                                                                  algorithm.replace("_","-"),
+                                                                  algorithm,
+                                                                  AvaiableChargingStations,
+                                                                  tankThreshold,
+                                                                  walkingTreshold,
+                                                                  ZoneCars,
+                                                                  RechargingStation_Zones,
+                                                                  Stamps_Events,
+                                                                  DistancesFrom_Zone_Ordered,
+                                                                  lastS,
+                                                                  pt,
+                                                                  kwh,
+                                                                  randomInitLvl,
+                                                                  None,
+                                                                  -1,
+                                                                  None,
+                                                                  city
+                                                                  ))
 
 
 
 
-                                    nsimulations +=1
+                                nsimulations +=1
 
-                                    jobs.append(p)
-                                    p.start()
-
-
-                                    if(len(jobs)>120):
-                                        time.sleep(.1) #only to print after other prints
-                                        print("\nWaiting for %d simulations"%len(jobs))
-                                        with click.progressbar(jobs, length=len(jobs)) as bar:
-                                            for proc in bar:
-                                                proc.join()
-                                        jobs.clear()
+                                jobs.append(p)
+                                p.start()
 
 
-
-
-
+                                if(len(jobs)>120):
+                                    time.sleep(.1) #only to print after other prints
+                                    print("\nWaiting for %d simulations"%len(jobs))
+                                    with click.progressbar(jobs, length=len(jobs)) as bar:
+                                        for proc in bar:
+                                            proc.join()
+                                    jobs.clear()
 
 
             print("")

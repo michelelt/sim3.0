@@ -90,10 +90,14 @@ def exploreNeighbours():
     return xynew, direction, myindex
 
 def solution_already_exists(new_sol, tested_sol):
-    new_sol_str =  str(sorted(new_sol))
-    return new_sol_str in tested_sol.keys()
+    my_sol = sorted(new_sol)
+    key = "-".join(str(e) for e in my_sol)
+    return key in tested_sol.keys()
 
 
+def cost_function(results):
+    if results == "": return 100000
+    else: return 100000 * results['PercDeath'] + results['WeightedWalkedDistance']
 
 
 def exploreDirection(directionToFollow):
@@ -165,13 +169,7 @@ def main(par_numberOfStations):
     :return: the optimal CS placement
     '''
     iniTimeSim = datetime.datetime.now()
-    ##TO AVOID: "OSError: [Errno 24] Too many open files"
-    # bashCommand = "ulimit -n 32768"
-    # process = subprocess.Popen(bashCommand.split(), stdout=subprocess.PIPE)
-    # process.communicate()
-    ###
     
-    ## To pass in sys ##
     walkingTreshold = 1000000
     city = "Torino"
     zones = sf.numberOfZones(city)
@@ -180,7 +178,6 @@ def main(par_numberOfStations):
     tankThreshold = 25 
     AvaiableChargingStations = 4
     BestEffort = True
-    utt = 100
     pThreshold = 0.5
     randomInitLvl = False
 
@@ -203,7 +200,7 @@ def main(par_numberOfStations):
             exit(-1)
 
     '''
-    Download of one simulation, can be commented
+    Download of one simulation, it can be commented
     '''
     # lastS = c2id[city]
     # copyFileFromServer(gv.provider, "Hybrid", algorithm, numberOfStations, str(4),
@@ -244,7 +241,8 @@ def main(par_numberOfStations):
     results = ""
     k=0
     step=0
-    AWD_impr_perc = 100
+    fit_impr_perc = 100
+    fitness_old = 1e7
     manager = multiprocessing.Manager()
 
     global followDirection
@@ -253,11 +251,11 @@ def main(par_numberOfStations):
     '''
     optmization
     '''
-    while step <=1e3 or AWD_impr_perc <=0.1:
+    while step <=1000 and fit_impr_perc >=0.0001:
         return_dict = manager.dict()
 
-        if step % 100 == 0:
-            print("Iteration #", step)
+        # if step % 100 == 0:
+        print("Iteration #", step)
 
         if followDirection == True :
             '''
@@ -287,11 +285,47 @@ def main(par_numberOfStations):
         for k in range(0,len(xynew)):
             IDn = MatrixCoordinatesToID(xynew[k][0], xynew[k][1])
             if IDn in zonesMetrics.id and IDn not in RechargingStation_Zones :
-                RechargingStation_Zones_new[k]=RechargingStation_Zones.copy()
-                RechargingStation_Zones_new[k][myindex] = IDn
-                if solution_already_exists(str(sorted(RechargingStation_Zones_new[k])), tested_solution) == True :
-                    k=k-1
+                tmp=RechargingStation_Zones.copy()
+                tmp[myindex] = IDn
+                if solution_already_exists(tmp, tested_solution) == True :
+                    # print('solution tested', "-".join(str(e) for e in sorted(tmp)) )
+                    RechargingStation_Zones_new[k] = []
 
+                else:
+                    RechargingStation_Zones_new[k]=tmp
+
+                    my_sol = sorted( RechargingStation_Zones_new[k])
+                    key = "-".join(str(e) for e in my_sol)
+                    tested_solution[key] = True
+                    # print('not used', key)
+
+        # for k in tested_solution.keys():
+        #     print(k)
+        #
+        # print()
+
+        Sol2Test = {}
+        sol_index = 0
+        empty = 0
+        for k in RechargingStation_Zones_new.keys():
+
+            if len(RechargingStation_Zones_new[k]) > 0:
+                Sol2Test[sol_index] = RechargingStation_Zones_new[k]
+                sol_index+=1
+
+        # print ('before', len(RechargingStation_Zones_new), empty)
+        # RechargingStation_Zones_new= Sol2Test
+        # print('after', len(RechargingStation_Zones_new))
+
+        if len(RechargingStation_Zones_new) == 0 :
+            print ('NNI')
+            step+=1
+            continue
+
+
+        start_sim_time = time.time()
+        # RechargingStation_Zones_new2 = {}
+        # RechargingStation_Zones_new2[0] = RechargingStation_Zones_new[0]
         for i in RechargingStation_Zones_new:
             # print("RSZ_new",i, RechargingStation_Zones_new[i])
             p = Process(target=RunSim,args = (BestEffort,
@@ -305,7 +339,6 @@ def main(par_numberOfStations):
                                               Stamps_Events,
                                               DistancesFrom_Zone_Ordered,
                                               lastS,
-                                              utt,
                                               pThreshold,
                                               2,
                                               randomInitLvl,
@@ -314,10 +347,6 @@ def main(par_numberOfStations):
                                               direction[i],
                                               city))
 
-
-
-
-            k+=1
             jobs.append(p)
             p.start()
 
@@ -325,10 +354,14 @@ def main(par_numberOfStations):
         for proc in jobs:
             proc.join()
 
+        end_sim_time = time.time() - start_sim_time
+        print('Time for %d sim: %d s'%(len(RechargingStation_Zones_new), end_sim_time))
+
+
         followDirection = False
 
         '''
-        Results analysis
+        # Results analysis
         '''
         for val in return_dict.values():
 
@@ -343,15 +376,19 @@ def main(par_numberOfStations):
             A direction to follow has been found,
                 saving solutions
             '''
-            if results == "" or \
-                        (new_results["PercDeath"] <= results["PercDeath"]
-                     and new_results["MeanMeterEnd"] < results["MeanMeterEnd"]):
+            #
+            # if results == "" or \
+            #             (new_results["PercDeath"] <= results["PercDeath"]
+            #          and new_results["MeanMeterEnd"] < results["MeanMeterEnd"]):
+            fitness_new = cost_function(new_results)
+            if  results == "" or \
+                            fitness_new <= fitness_old:
 
                 if results == "" :
-                    AWD_impr_perc = 100
+                    fit_impr_perc = 100
+                    fitness_old = 1e8
                 else:
-                    AWD_impr_perc = 100 - (float(new_results['MeanMeterEnd'])*100/float(results['MeanMeterEnd']))
-                print (AWD_impr_perc)
+                    fit_impr_perc = (fitness_old - fitness_new)*100/fitness_old
 
                 followDirection = True
                 directionToFollow = new_results["Direction"]
@@ -362,16 +399,28 @@ def main(par_numberOfStations):
                 print("\nNEW BEST SOLUTION FOUND")
                 print("**********************************************************************")
                 if(results!=""):
-                    print("Old: %.2f %.2f"%(results["PercDeath"],results["MeanMeterEnd"]))
-                print("New: %.2f %.2f"%(new_results["PercDeath"],new_results["MeanMeterEnd"]))
+                    print("Old: %.2f %.2f %.2f"
+                               %(results["PercDeath"],results['MeanMeterEnd'], results["WeightedWalkedDistance"])
+                         )
+                print("New: %.2f %.2f %.2f"
+                               %(new_results["PercDeath"],new_results['MeanMeterEnd'], new_results["WeightedWalkedDistance"])
+                         )
+                print(new_results)
+                print("fit old: %.2f, fit new: %.2f"%(fitness_old, fitness_new))
+                print ('fit_impr_perc', fit_impr_perc)
+                print()
                 print("**********************************************************************")
 
                 fout.write("\nNEW BEST SOLUTION FOUND\n")
                 fout.write("**********************************************************************\n")
                 fout.write("Nsteps: %d"%step+"\n")
                 if(results!=""):
-                    fout.write("Old: %.2f %.2f\n"%(results["PercDeath"],results["MeanMeterEnd"]))
-                fout.write("New: Deaths=%.2f MeanMeterEnd=%.2f\n"%(new_results["PercDeath"],new_results["MeanMeterEnd"]))
+                    fout.write("Old: %.2f %.2f %.2f\n"
+                               %(results["PercDeath"],results['MeanMeterEnd'], results["WeightedWalkedDistance"])
+                               )
+                fout.write("New: Deaths=%.2f MeanMeterEnd=%.2f wwd=%.2f\n"
+                               %(new_results["PercDeath"], new_results['MeanMeterEnd'], new_results["WeightedWalkedDistance"])
+                           )
                 fout.write(str(RechargingStation_Zones)+"\n")
                 fout.write(str(results)+"\n")
                 fout.write("**********************************************************************\n")
@@ -379,30 +428,18 @@ def main(par_numberOfStations):
 
                 results=new_results.copy()
 
-                print(RechargingStation_Zones)
-                print(results)
+                fitness_old = fitness_new
 
-                AWD_impr_perc = ()
-
-
+                # print(RechargingStation_Zones)
+                # print(results)
+        print(step)
         step+=1
     print(str(1e3), "Iteration done in", (datetime.datetime.now() - iniTimeSim)/60, "minutes")
 
 
-jobs=[]
-# for noz in [12,13,14,15,17,19,21,23,25]
-# for noz in [2,3,4,5,6,7,8,9,10,11,12,13,14,15,17,19,21,23,25,27, 29, 31, 33, 35, 37, 39, 41]:
-for noz in [32]:
+for noz in [5]:
    main(noz)
-   # jobs.append(p)
-   # p.start()
-    
 
-# initZones = [ 226, 208, 224, 262, 210, 243, 246, 169, 154, 229, 261, 244]
-# finalZones = [226, 251, 221, 262, 210, 44,  246, 187, 172, 229, 261, 245]
-# zones  = zonesMetrics.set_index("id")
-# zones.loc[initZones].to_csv("/Users/mc/Desktop/TorInit12.csv")
-# zones.loc[finalZones].to_csv("/Users/mc/Desktop/Torfinal12.csv")
 
 
 
