@@ -15,26 +15,28 @@ import subprocess
 
 import Simulator.Globals.SupportFunctions as sf
 import Simulator.Globals.GlobalVar as gv
+
+city = 'Torino'
 gv.init()
-sf.assingVariables()
+sf.assingVariables(city)
 
-algorithm="max-parking"
-RechargingStation_Zones=2
-AvaiableChargingStations=4
-tankThreshold=25
-walkingTreshold=1000000
-utt=100
-p=0
-lastS = 9
-pt = 0
+walkingTreshold = 1000000
+city = "Torino"
+zones = sf.numberOfZones(city)
+algorithm = "max-parking"
+numberOfStations = 5
+tankThreshold = 25
+AvaiableChargingStations = 4
 BestEffort = True
-randomStrtingLevel = False
+pThreshold = 0.5
+randomInitLvl = False
+return_dict = {}
 
-ZoneCars = pickle.load( open( "../input/"+ gv.provider +"_ZoneCars.p", "rb" ) )
-DistancesFrom_Zone_Ordered = pickle.load( open( "../input/"+ gv.provider + "_ZoneDistances.p", "rb" ) )
-Stamps_Events = pickle.load( open( "../events/"+ gv.provider + "_sorted_dict_events_obj.pkl", "rb" ) )
+ZoneCars = pickle.load( open( "../input/"+ city + "_" + gv.provider +"_ZoneCars.p", "rb" ) )
+DistancesFrom_Zone_Ordered = pickle.load( open( "../input/"+ city + "_" + gv.provider + "_ZoneDistances.p", "rb" ) )
+Stamps_Events = pickle.load( open( "../events/"+ city + "_" + gv.provider + "_sorted_dict_events_obj.pkl", "rb" ) )
 
-RechargingStation_Zones = loadRecharing(algorithm, RechargingStation_Zones)
+RechargingStation_Zones = sf.loadRecharing(algorithm, numberOfStations, city)
 p = Process(target=RunSim,args = (BestEffort,
                                   algorithm.replace("_","-"),
                                   algorithm,
@@ -45,12 +47,14 @@ p = Process(target=RunSim,args = (BestEffort,
                                   RechargingStation_Zones,
                                   Stamps_Events,
                                   DistancesFrom_Zone_Ordered,
-                                  lastS,
-                                  utt,
-                                  pt,
-                                  None,
-                                  randomStrtingLevel,
-                                  -1))
+                                  46,
+                                  pThreshold,
+                                  2,
+                                  randomInitLvl,
+                                  return_dict,
+                                  6,
+                                  1,
+                                  city))
 p.start()
 
 
