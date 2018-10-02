@@ -23,6 +23,8 @@ import subprocess
 from pathlib import Path
 
 import Simulator.Globals.GlobalVar as GlobalVar
+import Simulator.Classes.Distance
+
 
 def readConfigFile(city):
 
@@ -385,7 +387,7 @@ def loadRecharing(method, numberOfStations, city):
             # if(rn not in Stations): Stations.append(rn)
         Stations2 = random.sample(zones_list, numberOfStations)
         for i in range(0, len(Stations2)):
-           Stations.append(Stations2[i])
+            Stations.append(Stations2[i])
 
 
     else :
@@ -402,7 +404,7 @@ def loadRecharing(method, numberOfStations, city):
                     Stations.append(index)
                     if len(Stations) == numberOfStations:
                     #     Stations.pop(0)
-                         break
+                        break
 
     return Stations
 
@@ -435,5 +437,28 @@ def foutname(BestEffort,algorithm,AvaiableChargingStations,numberOfStations,
              str(int(kwh))
 
     return policy, fileid,fileid+".txt"
+
+
+def FillDistancesFrom_Recharging_Zone_Ordered(DistancesFrom_Zone_Ordered,\
+                                              DistancesFrom_Recharging_Zone_Ordered,\
+                                              RechargingStation_Zones):
+    
+    for zoneI in DistancesFrom_Zone_Ordered:
+        DistancesFrom_Recharging_Zone_Ordered[zoneI] = []
+        for DistanceI in DistancesFrom_Zone_Ordered[zoneI]:
+            RandomZones = DistanceI[1].getZones()
+            DistanceValid=""
+            for RandomZonesI in RandomZones:
+                if(RandomZonesI in RechargingStation_Zones):
+                    if(DistanceValid==""):
+                        DistanceValid = (DistanceI[0],Simulator.Classes.Distance.Distance(DistanceI[0]))
+                    DistanceValid[1].appendZone(RandomZonesI)
+            if(DistanceValid!=""):
+                DistancesFrom_Recharging_Zone_Ordered[zoneI].append(DistanceValid)
+    
+    return
+
+
+
 
 from Simulator.Classes.Zone import *

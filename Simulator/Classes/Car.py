@@ -86,7 +86,7 @@ class Car(object):
 
         delta_c = -1 
         start_recharge = -1
-        str_out=""
+
         # distance = haversine(1.1,1.2,1.2,1.3)
         if self.WasInRecharge:
             delta_c, self.BatteryCurrentCapacity = self.EvalCurrentCapacity(EndRecharge)

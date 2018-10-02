@@ -16,6 +16,7 @@ import subprocess
 import Simulator.Globals.SupportFunctions as sf
 import Simulator.Globals.GlobalVar as gv
 
+import cProfile
 city = 'Torino'
 gv.init()
 sf.assingVariables(city)
@@ -37,24 +38,25 @@ DistancesFrom_Zone_Ordered = pickle.load( open( "../input/"+ city + "_" + gv.pro
 Stamps_Events = pickle.load( open( "../events/"+ city + "_" + gv.provider + "_sorted_dict_events_obj.pkl", "rb" ) )
 
 RechargingStation_Zones = sf.loadRecharing(algorithm, numberOfStations, city)
-p = Process(target=RunSim,args = (BestEffort,
-                                  algorithm.replace("_","-"),
-                                  algorithm,
-                                  AvaiableChargingStations,
-                                  tankThreshold,
-                                  walkingTreshold,
-                                  ZoneCars,
-                                  RechargingStation_Zones,
-                                  Stamps_Events,
-                                  DistancesFrom_Zone_Ordered,
-                                  46,
-                                  pThreshold,
-                                  2,
-                                  randomInitLvl,
-                                  return_dict,
-                                  6,
-                                  1,
-                                  city))
-p.start()
+print(RechargingStation_Zones)
+
+RunSim(BestEffort,
+      algorithm.replace("_","-"),
+      algorithm,
+      AvaiableChargingStations,
+      tankThreshold,
+      walkingTreshold,
+      ZoneCars,
+      RechargingStation_Zones,
+      Stamps_Events,
+      DistancesFrom_Zone_Ordered,
+      46,
+      pThreshold,
+      2,
+      randomInitLvl,
+      return_dict,
+      6,
+      1,
+      city)
 
 

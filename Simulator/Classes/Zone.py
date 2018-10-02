@@ -18,13 +18,15 @@ class Zone(object):
         self.AvaiableChargingStations = AvaiableChargingStations
         self.ID = ID
         self.Cars = []
-        self.RechargedCars = []        
+        self.RechargedCars = [] 
+        self.numCars = 0       
         return
 
 
 
     def getBestGlobalCars(self,Stamp):
        
+        #if(len(self.RechargedCars) == 0 and len(self.Cars) == 0): return ""
         BestCar = ""
         BestLvl = -1
         InRecharge = False
@@ -52,6 +54,7 @@ class Zone(object):
                     InRecharge = False
                     
         if(BestCar != ""): 
+            self.numCars-=1
             if(InRecharge): 
                 del self.RechargedCars[self.RechargedCars.index(BestCar)]
             else: 
@@ -60,7 +63,7 @@ class Zone(object):
         return BestCar
 
         
-    def getBestRechargedCars(self,Stamp):
+    '''def getBestRechargedCars(self,Stamp):
         
         if len(self.RechargedCars)==0: return ""
         
@@ -76,7 +79,9 @@ class Zone(object):
                     BestCar = CarI
                     BestLvl = CarILvl
     
-        if(BestCar != ""): del self.RechargedCars[self.RechargedCars.index(BestCar)]
+        if(BestCar != ""): 
+            self.numCars=-1
+            del self.RechargedCars[self.RechargedCars.index(BestCar)]
 
         return BestCar
     
@@ -93,11 +98,13 @@ class Zone(object):
             else:
                 if(CarI.getBatteryLvl() > BestCar.getBatteryLvl()): BestCar = CarI  
         
-        if(BestCar != ""): del self.Cars[self.Cars.index(BestCar)]
-        return BestCar
+        if(BestCar != ""): 
+            self.numCars=-1
+            del self.Cars[self.Cars.index(BestCar)]
+        return BestCar'''
     
     def getAnyParking(self,CarToPark):
-        
+        self.numCars+=1
         self.Cars.append(CarToPark)
         
         return
@@ -105,6 +112,7 @@ class Zone(object):
     def getParkingAtRechargingStations(self,CarToPark):
         
         if(len(self.RechargedCars) < self.AvaiableChargingStations):
+            self.numCars+=1
             self.RechargedCars.append(CarToPark)
             return True
         
@@ -114,9 +122,13 @@ class Zone(object):
         
         return len(self.RechargedCars)
         
-    def getNumCar(self):
+    def getNumUnRecCar(self):
         
         return len(self.Cars)
+
+    def getNumCars(self):
+        
+        return self.numCars
 
     def setCars(self,cars):
 
@@ -128,6 +140,8 @@ class Zone(object):
         
         self.Cars = CarVector
 
+        self.numCars = len(self.Cars)
+        
         return
 
     def setAvaiableChargingStations(self, n):

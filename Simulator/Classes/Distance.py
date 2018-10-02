@@ -1,4 +1,5 @@
-from random import shuffle
+#from random import shuffle
+import numpy as np
 import sys
 import os
 p = os.path.abspath('..')
@@ -20,10 +21,17 @@ class Distance(object):
         return  
     
     def getZones(self):
-        shuffle(self.Zones)
+        #print(self.Zones)
+        #shuffle(self.Zones)
         
         return self.Zones
-    
+
+    def getRandomZones(self):
+        #print(self.Zones)
+        np.random.shuffle(self.Zones)
+        
+        return self.Zones
+
     def getDistance(self):
     
         return self.Distance

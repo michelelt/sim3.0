@@ -20,6 +20,7 @@ def init():
     global shiftLat500m, shiftLon500m, NColumns, NRows, MaxIndex, ShiftLon, ShiftLat, car2goKey, kwh_supplied
     global CaselleMaxLat, CaselleMaxLon, CaselleminLat, CaselleminLon, BAminLat, BAminLon, BAmaxLat, BAmaxLon, BerlinCriticalZone
     
+  
     MaxLat = 0
     MaxLon = 0
     minLat = 0
