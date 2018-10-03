@@ -27,6 +27,7 @@ zonesMetrics = pd.read_csv("../input/"+ city + "_" +gv.provider+"_ValidZones.csv
 
 import pprint
 pp = pprint.PrettyPrinter()
+refer_time = int(time.time())
 
 
 def printMatrix(xynew):
@@ -265,11 +266,11 @@ def main(par_numberOfStations):
     city = "Torino"
     zones = sf.numberOfZones(city)
     algorithm = "max-parking"
-    numberOfStations = par_numberOfStations
+    numberOfStations = 18
     tankThreshold = 25 
     AvaiableChargingStations = 4
     BestEffort = True
-    pThreshold = 0.5
+    pThreshold = 1
     randomInitLvl = False
 
     global tested_solution
@@ -409,8 +410,8 @@ def main(par_numberOfStations):
             print ('FD', followDirection)
             followDirection = False
             NNI_counter+=1
-            if NNI_counter == 10:
-                break
+            if NNI_counter == 36: break
+            continue
         NNI_counter = 0
 
 
@@ -488,7 +489,7 @@ def main(par_numberOfStations):
 
 
                 print_new_solution(results, new_results, fit_impr_perc, fitness_old, fitness_new, RechargingStation_Zones, step)
-                fout = open("../output/best_solutions_"+city+"_"+str(numberOfStations)+".txt","a")
+                fout = open("../output/best_solutions_"+city+"_"+str(numberOfStations)+"_"+refer_time+".txt","a")
                 write_new_solution(fout, results, new_results, fit_impr_perc, fitness_old, fitness_new,
                            RechargingStation_Zones, step, end_sim_time)
 

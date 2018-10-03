@@ -32,7 +32,7 @@ algorithm = "max-parking"
 numberOfStations = 18
 tankThreshold = 25
 AvaiableChargingStations = 4
-BestEffort = False
+BestEffort = True
 pThreshold = 1
 randomInitLvl = False
 return_dict = {}
@@ -44,10 +44,14 @@ Stamps_Events = pickle.load( open( "../events/"+ city + "_" + gv.provider + "_so
 #RechargingStation_Zones = sf.loadRecharing(algorithm, numberOfStations, city)
 #print(RechargingStation_Zones)
 
+refer_time = int(time.time())
+
+
 diroutput = '../output/'
-filename = 'genetico_best.txt'
+filename = 'genetico_best_'+refer_time+'.txt'
 fbest = open(diroutput+filename, "w+")
-filename = 'genetico_log.txt'
+
+filename = 'genetico_log'+refer_time+'.txt'
 flog = open(diroutput+filename, "w+")
 
 import random
@@ -63,7 +67,7 @@ with open("../input/"+ city + "_" +gv.provider+"_ValidZones.csv") as f:
 #print(valid_zones)
 valid_zones = [int(valid_zones_str[i]) for i in range(1,len(valid_zones_str))]
 NunZones = numberOfStations #18 #total number of zones 
-NumInitSolutions = 2 #popolazione iniziale e a ogni generazione
+NumInitSolutions = 100 #popolazione iniziale e a ogni generazione
 NumberofJoint = int(NumInitSolutions/2) # numero di figli per generazione
 Mutation_prob=0.02 #probability between 0 and 1
 Mutation_prob_strong=0.2 #probability when poor genetic population
@@ -277,7 +281,7 @@ def NewGeneration(Parents, Children):
     print("Generazione: ", counterSolutions,
           "Geni disponibili in popolazione: ", str('{0:.2f}'.format(geni_tot)),
           "Not improving for #gen: ", not_improving)
-    flog.write("Generazione: " + counterSolutions + " ")
+    flog.write("Generazione: " + str(counterSolutions) + " ")
     flog.write("Geni disponibili in popolazione: "+ str('{0:.2f}'.format(geni_tot))+" ")
     flog.write("Not improving for #gen: "+str(not_improving)+'\n' )
 
