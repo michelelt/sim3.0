@@ -1,9 +1,5 @@
  #!/usr/bin/env python3
 
-
-import Simulator.Classes.Distance 
-
-from random import shuffle
 import numpy as np
 import pickle
 import sys
@@ -20,42 +16,46 @@ import Simulator.Globals.SupportFunctions as sf
 import Simulator.Globals.GlobalVar as gv
 
 
-DistancesFrom_Recharging_Zone_Ordered = {}
 
 
-def SearchAvailableCar(ZoneI,Stamp):
+def SearchAvailableCar(RechargingStation_Zones,ZoneI,Stamp):
 
-    if(ZoneI.getNumCars()>0):
-        return ZoneI.getBestGlobalCars(Stamp)        
-    return ""
+    SelectedCar = "" 
+    
+    SelectedCar = ZoneI.getBestGlobalCars(Stamp)
+    '''if(ZoneI.ID in RechargingStation_Zones):
+        SelectedCar = ZoneI.getBestRechargedCars(Stamp)
+    if(SelectedCar == ""):
+        SelectedCar = ZoneI.getBestCars()'''
+    
+    
+    return SelectedCar
 
 
-def SearchNearestBestCar(DistancesFrom_Zone_Ordered,ZoneID_Zone,BookingStarting_Position,Stamp):
+def SearchNearestBestCar(RechargingStation_Zones,DistancesFrom_Zone_Ordered,ZoneID_Zone,BookingStarting_Position,Stamp):
        
     SelectedCar = ""
-    DistanceV = -1
+    Distance = -1
     Iter = 0
     for DistanceI in DistancesFrom_Zone_Ordered[BookingStarting_Position]:        
         Iter +=1
-        RandomZones = DistanceI[1].getRandomZones()
-        for ZoneI_ID in RandomZones:        
+        RandomZones = DistanceI[1].getZones()
+        for ZoneI_ID in RandomZones:
             ZoneI = ZoneID_Zone[ZoneI_ID]                    
-            SelectedCar = SearchAvailableCar(ZoneI,Stamp)
+            SelectedCar = SearchAvailableCar(RechargingStation_Zones,ZoneI,Stamp)
             if(SelectedCar != ""):
-                DistanceV = DistanceI[1].getDistance()
-                return SelectedCar, DistanceV, ZoneI.ID, Iter
+                Distance = DistanceI[1].getDistance()
+                return SelectedCar, Distance, ZoneI.ID, Iter
     
     print("erroreeeee")
     return -1, -1
-
-
 
 def ParkCar(RechargingStation_Zones, DistancesFrom_Zone_Ordered, ZoneID_Zone, BookingEndPosition,
             BookedCar, tankThreshold, walkingTreshold, BestEffort, pThreshold):
     
     ToRecharge = False
     Recharged = False
-    DistanceV =-1   
+    Distance =-1   
     Iter = 0
     Lvl =BookedCar.getBatteryLvl()
 
@@ -67,30 +67,28 @@ def ParkCar(RechargingStation_Zones, DistancesFrom_Zone_Ordered, ZoneID_Zone, Bo
     #pThreshold == 100 -> hybrid
     if(BestEffort
        and BookingEndPosition in RechargingStation_Zones
-       and pThreshold >= p):
+       and pThreshold > p):
 
         DistanceI = DistancesFrom_Zone_Ordered[BookingEndPosition][0]        
-        DistanceV = DistanceI[1].getDistance()
+        Distance = DistanceI[1].getDistance()
         ZoneI_ID = DistanceI[1].getZones()[0]
         ZoneI = ZoneID_Zone[ZoneI_ID]        
         Found = ZoneI.getParkingAtRechargingStations(BookedCar)
         if(Found): 
             Recharged = True
             BookedCar.setInStation()
-            return Lvl, ToRecharge, Recharged, DistanceV, ZoneI.ID, 1, p
-            
+            return Lvl, ToRecharge, Recharged, Distance, ZoneI.ID, 1, p
+
+
     #Park only if N config and under TT in CS
     if(Lvl < tankThreshold):
         #print("PROBLEMA: %d"%BookedCar.getBatteryLvl())
-        Iter=0
         ToRecharge = True
-        for DistanceI in  DistancesFrom_Recharging_Zone_Ordered[BookingEndPosition]:    
+        for DistanceI in DistancesFrom_Zone_Ordered[BookingEndPosition]:    
             Iter +=1    
             Distance = DistanceI[1].getDistance()
             if(Distance > walkingTreshold): break            
-            RandomZones = DistanceI[1].getRandomZones()
-        
-
+            RandomZones = DistanceI[1].getZones()
             for ZoneI_ID in RandomZones:     
                 ZoneI = ZoneID_Zone[ZoneI_ID]
                 if(ZoneI.ID in RechargingStation_Zones):    
@@ -98,8 +96,7 @@ def ParkCar(RechargingStation_Zones, DistancesFrom_Zone_Ordered, ZoneID_Zone, Bo
                     if(Found): 
                         Recharged = True
                         BookedCar.setInStation()
-                        return Lvl, ToRecharge, Recharged, Distance, ZoneI.ID, Iter, p         
-
+                        return Lvl, ToRecharge, Recharged, Distance, ZoneI.ID, Iter, p
 
 
     #Park the car withouht plug it
@@ -124,6 +121,41 @@ def WriteOutHeader(file, parametersDict):
     file.write("####"+"\n")
 
     return
+
+def dict_to_string(myDict):
+    
+    mykeys = ["Type", "ToRecharge", "Recharged","ID","Lvl","Distance",
+    "Iter","Recharge", "StartRecharge", "Stamp","EventCoords",
+    "ZoneC", "Discharge", "TripDistance","FileID", "extractedP", "ZoneID", "OccupiedCS"]
+    
+    
+    outputString =""
+    for k in mykeys:
+        if(type(myDict[k]) is int):
+            outputString +="%d;"%myDict[k]
+        elif(type(myDict[k]) is str):
+            outputString +="%s;"%myDict[k]
+        elif(type(myDict[k]) is float):
+            outputString +="%.6f;"%myDict[k]
+        elif(type(myDict[k]) is bool):
+            outputString +=str(myDict[k])+";"
+        else:
+            outputString +="[%.6f,%.6f];"%(myDict[k][0],myDict[k][1])
+            
+        
+    outputString = outputString[:-1]
+    outputString+="\n"
+
+    return outputString
+
+# def ReroutedDischarge(event_coordinates, zone_coordinates):
+#     lon1 = event_coordinates[0]
+#     lat1 = event_coordinates[1]
+#     lon2 = zone_coordinates[0]
+#     lon2 = zone_coordinates[1]
+#
+#     distance = sf.haversine(lon1, lat1, lon2, lat2)
+#     consumption =
 
 
 def RunSim(BestEffort,
@@ -155,7 +187,10 @@ def RunSim(BestEffort,
     policy, fileID, fname = foutname(BestEffort,algorithmName,AvaiableChargingStations,numberOfStations,tankThreshold,
                                      walkingTreshold, pThreshold, kwh)
 
+
+
     
+
     NRecharge = 0
     NStart = 0
     NEnd = 0
@@ -170,13 +205,8 @@ def RunSim(BestEffort,
     ZoneID_Zone = {}
     
     ReloadZonesCars(ZoneCars, ZoneID_Zone, AvaiableChargingStations)
-    FillDistancesFrom_Recharging_Zone_Ordered(DistancesFrom_Zone_Ordered,\
-                                              DistancesFrom_Recharging_Zone_Ordered,\
-                                              RechargingStation_Zones)
-    
 
 
-            
     if randomStrtingLevel == True :
         for zone in ZoneCars:
             if len(ZoneCars[zone]) > 0 :
@@ -184,8 +214,11 @@ def RunSim(BestEffort,
                     car.BatteryCurrentCapacity = round(random.SystemRandom().random(),2) * car.BatteryMaxCapacity
 
     
-    output_directory ="../output/Simulation_"+str(lastS)+"/"         
-    
+    output_directory ="../output/Simulation_"+str(lastS)+"/"
+    if not os.path.exists(output_directory):
+        os.makedirs(output_directory)
+
+
     fout = open(output_directory+fname,"w")
                 
     fout2 = open(output_directory+"debugproblem.txt","w")
@@ -207,143 +240,134 @@ def RunSim(BestEffort,
     i=0
     occupiedCS = 0
     #with click.progressbar(Stamps_Events, length=len(Stamps_Events)) as bar:
-    for Stamp in Stamps_Events:
-        for Event in Stamps_Events[Stamp]:
-            i+=1
-            if(Event.type == "s"):
-                fout2.write("%d %d \n"%(Stamp,ActualBooking))#,TotalCar1,TotalCar2))
-                ActualBooking +=1
-                BookingStarting_Position = sf.coordinates_to_index(Event.coordinates)
-                BookingID = Event.id_booking
-                NearestCar, DistanceV, ZoneID, Iter = SearchNearestBestCar(DistancesFrom_Zone_Ordered,ZoneID_Zone,\
-                                                                   BookingStarting_Position, Stamp)
+
+    for inutile in range(0,1):
+        for Stamp in Stamps_Events:
+            for Event in Stamps_Events[Stamp]:
+                i+=1
+                if(Event.type == "s"):
+                    fout2.write("%d %d \n"%(Stamp,ActualBooking))#,TotalCar1,TotalCar2))
+                    ActualBooking +=1
+                    BookingStarting_Position = sf.coordinates_to_index(Event.coordinates)
+                    BookingID = Event.id_booking
+                    NearestCar, Distance, ZoneID, Iter = SearchNearestBestCar(RechargingStation_Zones,DistancesFrom_Zone_Ordered,ZoneID_Zone,\
+                                                                       BookingStarting_Position, Stamp)
 
 
-                if NearestCar.WasInRecharge == True :
-                    occupiedCS -= 1
+                    if NearestCar.WasInRecharge == True :
+                        occupiedCS -= 1
 
-                Recharge, StartRecharge = NearestCar.Recharge(Stamp)
-                NearestCar.setStartPosition(Event.coordinates)
-                BookingID_Car[BookingID] = NearestCar
-                Lvl = NearestCar.getBatteryLvl()
-                ID = NearestCar.getID()
-                ZoneC = zoneIDtoCoordinates(ZoneID)
+                    Recharge, StartRecharge = NearestCar.Recharge(Stamp)
+                    NearestCar.setStartPosition(Event.coordinates)
+                    BookingID_Car[BookingID] = NearestCar
+                    Lvl = NearestCar.getBatteryLvl()
+                    ID = NearestCar.getID()
+                    ZoneC = zoneIDtoCoordinates(ZoneID)
 
-
-                EventCoords = Event.coordinates
-                #Loop Unrooling
-                outputString  = "s;"
-                outputString += "nan;"
-                outputString += "nan;"
-                outputString += "%d;"% ID
-                outputString += "%.2f;"% Lvl
-                outputString += "%d;"% DistanceV
-                outputString += "%d;"% Iter
-                outputString += "%.2f;"%Recharge
-                outputString += "%d;"%StartRecharge
-                outputString += "%d;"% Stamp
-                outputString += "[%.6f,%.6f];"%(EventCoords[0],EventCoords[1])
-                outputString += "[%.6f,%.6f];"%(ZoneC[0],ZoneC[1])
-                outputString += "nan;" 
-                outputString += "nan;"
-                outputString += "%s;"%fileID
-                outputString += "%nan;"
-                outputString += "%d;"% ZoneID
-                outputString += "%d\n"% occupiedCS
-
-                fout.write(outputString)
-
-                if(DistanceV> 0):
-                    MeterRerouteStart.append(DistanceV)
-                NStart+=1
-            else:
-                BookingEndPosition = sf.coordinates_to_index(Event.coordinates)
-                if(BookingEndPosition<0): print(Event.coordinates)
-                ActualBooking -=1
-                BookedCar = BookingID_Car[Event.id_booking]
-                Discarge, TripDistance = BookedCar.Discharge(Event.coordinates)
-
-                Lvl, ToRecharge, Recharged, DistanceV, ZoneID, Iter, extractedP = ParkCar(RechargingStation_Zones,DistancesFrom_Zone_Ordered,ZoneID_Zone,\
-                                                                       BookingEndPosition, BookedCar, tankThreshold, walkingTreshold, BestEffort,\
-                                                                       pThreshold)
+                    d={"Type":"s",
+                    "ToRecharge":np.NaN,
+                    "Recharged":np.NaN,
+                    "ID":ID,
+                    "Lvl":Lvl,
+                    "Distance":Distance,
+                    "Iter":Iter,
+                    "Recharge":Recharge,
+                    "StartRecharge":StartRecharge,
+                    "Stamp":Stamp,
+                    "EventCoords":Event.coordinates,
+                    "ZoneC":ZoneC,
+                    "Discharge":np.NaN,
+                    "TripDistance":np.NaN,
+                    "FileID": fileID,
+                    "extractedP" : np.NaN,
+                    "ZoneID":ZoneID,
+                    "OccupiedCS":occupiedCS}
 
 
-                #extra consuption if there is rerouting
-                if DistanceV > 0:
-                    BookedCar.setStartPosition(Event.coordinates)
-                    DiscargeR, TripDistanceR = BookedCar.Discharge(sf.zoneIDtoCoordinates(ZoneID))
-                    Discarge += DiscargeR
-                    TripDistance += TripDistanceR
-                    
-                    #Please notice that TripDistanceR > Distance because TripDistanceR keeps in account the corr. fact
-                    #Distance is dist(centre_arrival_Zone, centre_leaving_zone), so in this distance is biased by an error of 150m
-                    # print("Distnace", Distance)
-                    # print("Discharge", Discarge)
-                    # print("DischargeR", DiscargeR)
-                    # print("TripDistance", TripDistance)
-                    # print("TripDistanceR", TripDistanceR)
-                    # print("check", sf.haversine(Event.coordinates[0],
-                    #                             Event.coordinates[1],
-                    #                             sf.zoneIDtoCoordinates(ZoneID)[0],
-                    #                             sf.zoneIDtoCoordinates(ZoneID)[1]
-                    #                             )*gv.CorrectiveFactor
-                    # )
-                    # print("-------------------------")
+                    fout.write(dict_to_string(d))
+
+                    if(Distance> 0):
+                        MeterRerouteStart.append(Distance)
+                    NStart+=1
+                else:
+                    BookingEndPosition = sf.coordinates_to_index(Event.coordinates)
+                    if(BookingEndPosition<0): print(Event.coordinates)
+                    ActualBooking -=1
+                    BookedCar = BookingID_Car[Event.id_booking]
+                    Discarge, TripDistance = BookedCar.Discharge(Event.coordinates)
+
+                    Lvl, ToRecharge, Recharged, Distance, ZoneID, Iter, extractedP = ParkCar(RechargingStation_Zones,DistancesFrom_Zone_Ordered,ZoneID_Zone,\
+                                                                           BookingEndPosition, BookedCar, tankThreshold, walkingTreshold, BestEffort,\
+                                                                           pThreshold)
 
 
+                    #extra consuption if there is rerouting
+                    if Distance > 0:
+                        BookedCar.setStartPosition(Event.coordinates)
+                        DiscargeR, TripDistanceR = BookedCar.Discharge(sf.zoneIDtoCoordinates(ZoneID))
+                        Discarge += DiscargeR
+                        TripDistance += TripDistanceR
+                        '''
+                        Please notice that TripDistanceR > Distance because TripDistanceR keeps in account the corr. fact
+                        Distance is dist(centre_arrival_Zone, centre_leaving_zone), so in this distance is biased by an error of 150m
+                        '''
+                        # print("Distnace", Distance)
+                        # print("Discharge", Discarge)
+                        # print("DischargeR", DiscargeR)
+                        # print("TripDistance", TripDistance)
+                        # print("TripDistanceR", TripDistanceR)
+                        # print("check", sf.haversine(Event.coordinates[0],
+                        #                             Event.coordinates[1],
+                        #                             sf.zoneIDtoCoordinates(ZoneID)[0],
+                        #                             sf.zoneIDtoCoordinates(ZoneID)[1]
+                        #                             )*gv.CorrectiveFactor
+                        # )
+                        # print("-------------------------")
 
+                    BookedCar.setStartRecharge(Stamp)
+                    ID = BookedCar.getID()
+                    del BookingID_Car[Event.id_booking]
+                    ZoneC = zoneIDtoCoordinates(ZoneID)
 
+                    if Recharged == True :
+                        occupiedCS += 1
 
-                BookedCar.setStartRecharge(Stamp)
-                ID = BookedCar.getID()
-                del BookingID_Car[Event.id_booking]
-                ZoneC = zoneIDtoCoordinates(ZoneID)
+                    d={"Type":"e",
+                    "ToRecharge":ToRecharge,
+                    "Recharged":Recharged,
+                    "ID":ID,
+                    "Lvl":Lvl,
+                    "Distance":Distance,
+                    "Iter":Iter,
+                    "Recharge":np.NaN,
+                    "StartRecharge":np.NaN,
+                    "Stamp":Stamp,
+                    "EventCoords":Event.coordinates,
+                    "ZoneC":ZoneC,
+                    "Discharge":Discarge,
+                    "TripDistance":TripDistance,
+                    "FileID": fileID,
+                    "extractedP":extractedP,
+                    "ZoneID":ZoneID,
+                    "OccupiedCS":occupiedCS}
 
-                if Recharged == True :
-                    occupiedCS += 1
+                    fout.write(dict_to_string(d))
 
-                EventCoords = Event.coordinates
-                #Loop Unrooling
-                outputString  = "e;"
-                outputString += "%s;"%ToRecharge
-                outputString += "%s;"%Recharged
-                outputString += "%d;"% ID
-                outputString += "%.2f;"% Lvl
-                outputString += "%d;"% DistanceV
-                outputString += "%d;"% Iter
-                outputString += "nan;"
-                outputString += "nan;"
-                outputString += "%d;"% Stamp
-                outputString += "[%.6f,%.6f];"%(EventCoords[0],EventCoords[1])
-                outputString += "[%.6f,%.6f];"%(ZoneC[0],ZoneC[1])
-                outputString += "%.2f;"%Discarge 
-                outputString += "%.2f;"%TripDistance
-                outputString += "%s;"%fileID
-                outputString += "%.2f;"%extractedP
-                outputString += "%d;"% ZoneID
-                outputString += "%d\n"% occupiedCS
-                
-                fout.write(outputString)
+                    if(Distance > 0):
+                        MeterRerouteEnd.append(Distance)
 
+                    if(Recharged == True):
+                        NRecharge +=1
 
-                #fout.write(dict_to_string(d))
+                    if(BookedCar.getBatterCurrentCapacity()<0):
+                        NDeath +=1
 
-                if(DistanceV > 0):
-                    MeterRerouteEnd.append(DistanceV)
+                    NEnd+=1
 
-                if(Recharged == True):
-                    NRecharge +=1
-
-                if(BookedCar.getBatterCurrentCapacity()<0):
-                    NDeath +=1
-
-                NEnd+=1
-
-
-            # print (i, Event.type, occupiedCS)
-            # if occupiedCS > AvaiableChargingStations * len(RechargingStation_Zones):
-            #     print ("Noooooo")
-            #     break
+                # print (i, Event.type, occupiedCS)
+                # if occupiedCS > AvaiableChargingStations * len(RechargingStation_Zones):
+                #     print ("Noooooo")
+                #     break
 
     b = datetime.datetime.now()
     c = (b - a).total_seconds()
@@ -353,9 +377,7 @@ def RunSim(BestEffort,
     fout.close()
     fout2.close()
 
-
-    
-    '''if return_dict == None :
+    if return_dict == None :
         os.system('scp %s bigdatadb:/data/03/Carsharing_data/output/Simulation_%d/%s'%(output_directory+fname,lastS,fname))
         os.system('cat %s | ssh bigdatadb hdfs dfs -put -f - Simulator/output/Simulation_%s/%s' %(output_directory+fname,lastS,fname))
         os.system('rm %s'%(output_directory+fname))
@@ -394,9 +416,9 @@ def RunSim(BestEffort,
     output_folder = ""
     for i in range(0,len(current_folder)-1):
         output_folder += current_folder[i]+"/"
-    output_folder+="output/"'''
+    output_folder+="output/"
 
-    print('PID %d, time: %.3f'%(processID, time.time()-time_init))
+    print('PID %d, time: %d'%(processID, time.time()-time_init))
     #do not use
 	#os.system('ssh bigdatadb hdfs dfs -put /data/03/Carsharing_data/output/Simulation_%d/%s Simulator/output/Simulation_%d/%s &' %(lastS,fname,lastS,fname))
     #os.system('ssh bigdatadb cat /data/03/Carsharing_data/output/Simulation_%d/%s | hdfs dfs -put -f - Simulator/output/Simulation_%s/%s &' %(lastS,fname,lastS,fname))
