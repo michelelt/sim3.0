@@ -67,7 +67,7 @@ def ParkCar(RechargingStation_Zones, DistancesFrom_Zone_Ordered, ZoneID_Zone, Bo
     #pThreshold == 100 -> hybrid
     if(BestEffort
        and BookingEndPosition in RechargingStation_Zones
-       and pThreshold >= p):
+       and pThreshold > p):
 
         DistanceI = DistancesFrom_Zone_Ordered[BookingEndPosition][0]        
         Distance = DistanceI[1].getDistance()
@@ -214,8 +214,11 @@ def RunSim(BestEffort,
                     car.BatteryCurrentCapacity = round(random.SystemRandom().random(),2) * car.BatteryMaxCapacity
 
     
-    output_directory ="../output/Simulation_"+str(lastS)+"/"         
-    
+    output_directory ="../output/Simulation_"+str(lastS)+"/"
+    if not os.path.exists(output_directory):
+        os.makedirs(output_directory)
+
+
     fout = open(output_directory+fname,"w")
                 
     fout2 = open(output_directory+"debugproblem.txt","w")
@@ -321,10 +324,6 @@ def RunSim(BestEffort,
                         # )
                         # print("-------------------------")
 
-
-
-
-
                     BookedCar.setStartRecharge(Stamp)
                     ID = BookedCar.getID()
                     del BookingID_Car[Event.id_booking]
@@ -364,7 +363,6 @@ def RunSim(BestEffort,
                         NDeath +=1
 
                     NEnd+=1
-
 
                 # print (i, Event.type, occupiedCS)
                 # if occupiedCS > AvaiableChargingStations * len(RechargingStation_Zones):

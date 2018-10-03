@@ -51,7 +51,7 @@ def readConfigFile(city):
             initdate = "2017-09-05T00:00:00"
             config.write("initdate=" + initdate + "\n")
 
-            finaldate = "2017-11-02T00:00:00"
+            finaldate = "2017-09-13T00:00:00"
             config.write("finaldate=" + finaldate + "\n")
 
             fleetSize = 'mean'

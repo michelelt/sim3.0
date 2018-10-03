@@ -22,7 +22,11 @@ sf.assingVariables(city)
 import pprint
 pp = pprint.PrettyPrinter(indent=4)
 c2id = {"Vancouver":6, "Torino":7, "Berlino":10, "Milano":9}
+global zonesMetrics
 zonesMetrics = pd.read_csv("../input/"+ city + "_" +gv.provider+"_ValidZones.csv")
+
+import pprint
+pp = pprint.PrettyPrinter()
 
 
 def printMatrix(xynew):
@@ -58,6 +62,76 @@ def printMatrix(xynew):
         print()
     return
 
+def printMatrix_CS(CS_placement):
+    '''
+    function which prints the zones with a charging station
+    '''
+    print ("R:", gv.NRows, "C:", gv.NColumns)
+    matrix={}
+    for row in range(gv.NRows):
+        matrix[row] ={}
+        for col in range (gv.NColumns, 0, -1):
+            matrix[row][col] = " "
+
+    for id in zonesMetrics["id"]:
+        couple = sf.zoneIDtoMatrixCoordinates(id)
+        matrix[couple[2]][couple[1]] = '\''
+    k=0
+    for cs in CS_placement:
+        couple = sf.zoneIDtoMatrixCoordinates(cs)
+        matrix[couple[2]][couple[1]] = str(k)
+        k+=1
+
+    print("\t")
+    for i in range(gv.NColumns+1, 0, -1):
+        if i == gv.NColumns+1:
+            print("\t", end='')
+        else:
+            print(str(i) + "\t", end='')
+    print()
+
+    for row in range(gv.NRows-1, -1, -1):
+        print(str(row) + "\t", end='')
+        for col in range (gv.NColumns, 0, -1):
+            print(matrix[row][col] + "\t", end='')
+        print()
+    return
+
+def print_new_solution(results, new_results, fit_impr_perc, fitness_old, fitness_new, RechargingStation_Zones, step):
+    print("\nNEW BEST SOLUTION FOUND at step "+ str(step))
+    print("**********************************************************************")
+    if(results!=""):
+        print("Old: %.2f %.2f %.2f"
+                   %(results["PercDeath"],results['MeanMeterEnd'], results["WeightedWalkedDistance"])
+             )
+    print("New: %.2f %.2f %.2f"
+                   %(new_results["PercDeath"],new_results['MeanMeterEnd'], new_results["WeightedWalkedDistance"])
+             )
+    print (RechargingStation_Zones)
+    print (pp.pprint(new_results))
+
+    print("fit old: %.2f, fit new: %.2f"%(fitness_old, fitness_new))
+    print ('fit_impr_perc', fit_impr_perc)
+    print("**********************************************************************")
+
+def write_new_solution(fout, results, new_results, fit_impr_perc, fitness_old, fitness_new,
+                       RechargingStation_Zones, step, end_sim_time):
+    fout.write("\nNEW BEST SOLUTION FOUND\n")
+    fout.write("**********************************************************************\n")
+    fout.write("Nsteps: %d"%step+"\n")
+    if(results!=""):
+        fout.write("Old - Deaths=%f\tMeanMeterEnd=%f\twwd=%.2f\n"
+                   %(results["PercDeath"],results['MeanMeterEnd'], results["WeightedWalkedDistance"])
+                   )
+    fout.write("New - Deaths=%f\tMeanMeterEnd=%f\twwd=%.2f\n"
+                   %(new_results["PercDeath"], new_results['MeanMeterEnd'], new_results["WeightedWalkedDistance"])
+               )
+    fout.write("old fitness: %.4f - new fitness: %.4f\n"%(fitness_old, fitness_new))
+    fout.write("Fitness iprovemnt[%]: " + str(fit_impr_perc) + "\n")
+    fout.write('CS_placement: ' + str(RechargingStation_Zones)+'\n')
+    fout.write(str(results))
+    fout.close()
+
 def exploreNeighbours():
     '''
     extract a random index to chose which is the station to move
@@ -67,6 +141,7 @@ def exploreNeighbours():
     direction = {}
     myindex=np.random.randint(len(RechargingStation_Zones), size = 1)[0]
     ID=RechargingStation_Zones[myindex]
+    print ('extracted ID',ID)
     retv = sf.zoneIDtoMatrixCoordinates(ID)
     xy= [retv[1],retv[2]]
 
@@ -91,7 +166,7 @@ def exploreNeighbours():
 
 def solution_already_exists(new_sol, tested_sol):
     my_sol = sorted(new_sol)
-    key = "-".join(str(e) for e in my_sol)
+    key = "-".join([str(e) for e in my_sol])
     return key in tested_sol.keys()
 
 
@@ -108,14 +183,18 @@ def exploreDirection(directionToFollow):
     add all the zones in a given direcation until the border
     '''
     center = [directionToFollow[1], directionToFollow[2]]
+    ID = MatrixCoordinatesToID(center[0],center[1])
+    print ('extracted ID',ID)
+    print ('Direction', directionToFollow[0])
     i = 0
     xynew = {}
     direction = {}
     if directionToFollow[0] == 0: ##East
         # print("East")
         while True :
-            # print("MC2ID E", MatrixCoordinatesToID(center[0]-(i+1), center[1]))
-            if MatrixCoordinatesToID(center[0]-(i+1), center[1]) not in zonesMetrics.id :
+            print("MC2ID E", MatrixCoordinatesToID(center[0]-(i+1), center[1]))
+            if MatrixCoordinatesToID(center[0]-(i+1), center[1]) not in list(zonesMetrics.id) \
+                    or len(xynew) > gv.NColumns - center[0]%gv.NColumns:
                 return xynew, direction
             xynew[i] = [center[0]-(i+i), center[1]]
             direction[i] = [directionToFollow[0], center[0]-(i+i), center[1]]
@@ -125,17 +204,18 @@ def exploreDirection(directionToFollow):
         # print("South")
         while True :
             # print("MC2ID S", MatrixCoordinatesToID(center[0], center[1]-(i+1)))
-            if MatrixCoordinatesToID(center[0], center[1]-(i+1)) not in zonesMetrics.id:
+            if MatrixCoordinatesToID(center[0], center[1]-(i+1)) not in list(zonesMetrics.id):
                 return xynew, direction
-            xynew[i] = [center[0], center[1]-(i+i)]
-            direction[i] = [directionToFollow[0], center[0], center[1]-(i+i)]
+            xynew[i] = [center[0], center[1]-(i+1)]
+            direction[i] = [directionToFollow[0], center[0], center[1]-(i+1)]
             i = i + 1
 
     elif directionToFollow[0] == 2: ##West
         # print("West")
         while True :
-            # print("MC2ID W",MatrixCoordinatesToID(center[0]+(i+1), center[1]))
-            if MatrixCoordinatesToID(center[0]+(i+1), center[1]) not in zonesMetrics.id:
+            print("MC2ID W",MatrixCoordinatesToID(center[0]+(i+1), center[1]))
+            if MatrixCoordinatesToID(center[0]+(i+1), center[1]) not in list(zonesMetrics.id)\
+                     or len(xynew) > gv.NColumns - center[0]%gv.NColumns:
                 return xynew, direction
             xynew[i] = [center[0]+(i+1), center[1]]
             direction[i] = [directionToFollow[0], center[0]+(i+1), center[1]]
@@ -145,10 +225,10 @@ def exploreDirection(directionToFollow):
         # print("North")
         while True :
             # print("MC2ID N", MatrixCoordinatesToID(center[0], center[1]+(i+1)))
-            if MatrixCoordinatesToID(center[0], center[1]+(i+1)) not in zonesMetrics.id:
+            if MatrixCoordinatesToID(center[0], center[1]+(i+1)) not in list(zonesMetrics.id):
                 return xynew, direction
             xynew[i] = [center[0], center[1]+(i+i)]
-            direction[i] = [directionToFollow[0], center[0], center[1]+(i+i)]
+            direction[i] = [directionToFollow[0], center[0], center[1]+(i+1)]
             i = i + 1
     else:
         print("Direction Errore", directionToFollow[0])
@@ -161,6 +241,17 @@ def copyFileFromServer(provider, policy, algorithm, numberOfStations, acs, tt, w
     bashCommand = "scp "+ server+namefile + " " +dstDir+namefile
     os.system(bashCommand)
     return
+
+def RunSim_Toy(RechargingStation_Zones, processID, direction, return_dict):
+    RetValues = {}
+    RetValues["ProcessID"] = processID
+    RetValues["Sum"] = sum(RechargingStation_Zones)
+    RetValues['Direction'] = direction
+    return_dict[processID] = RetValues
+    return sum(RechargingStation_Zones)
+
+def cost_function_toy(results):
+    return results['Sum']
 
 
 def main(par_numberOfStations):
@@ -181,11 +272,9 @@ def main(par_numberOfStations):
     pThreshold = 0.5
     randomInitLvl = False
 
+    global tested_solution
     tested_solution = {}
 
-    '''
-    Bigdata db setup 
-    '''
     batcmd = 'ssh bigdatadb hadoop fs -ls /user/cocca/Simulator/output/' #Solo per controllare il ticket
     lastS = -1
     try:
@@ -198,13 +287,6 @@ def main(par_numberOfStations):
             print("ERROR: Kerberos Token not present. \n \
             Please log in the bigdata server to request kerberos Token")
             exit(-1)
-
-    '''
-    Download of one simulation, it can be commented
-    '''
-    # lastS = c2id[city]
-    # copyFileFromServer(gv.provider, "Hybrid", algorithm, numberOfStations, str(4),
-    #                    str(25), walkingTreshold, str(100), str(int(pThreshold*100)), str(lastS))
 
 
     '''
@@ -231,19 +313,20 @@ def main(par_numberOfStations):
     c = (b - a).total_seconds()
     print("End Load Recharging: "+str(int(c)))
 
-    jobs = []
-
     '''Entra qui solo se non carico abbastanza stazioni, cioè mai'''
     while len(RechargingStation_Zones)<numberOfStations:
         rn = np.random.randint(gv.NColumns*gv.NRows, size = 1)[0]
         if(rn not in RechargingStation_Zones): RechargingStation_Zones.append(rn)
 
+    print('Start', sorted(RechargingStation_Zones))
+
+
     results = ""
-    k=0
     step=0
     fit_impr_perc = 100
-    fitness_old = 1e7
     manager = multiprocessing.Manager()
+    NNI_counter = 0
+    fitness_old = 1000
 
     global followDirection
     followDirection = False
@@ -251,7 +334,8 @@ def main(par_numberOfStations):
     '''
     optmization
     '''
-    while step <=1000 and fit_impr_perc >=0.0001:
+    while step <=10000 and fit_impr_perc >=0.1:
+        print ('while', sorted(RechargingStation_Zones))
         return_dict = manager.dict()
 
         # if step % 100 == 0:
@@ -271,11 +355,9 @@ def main(par_numberOfStations):
             '''
             If there is not any direction, explore some random direction point with the NSEW neighbors
             '''
-            # print(step, "not FD")
             xynew , direction, myindex = exploreNeighbours()
         # print("MyIndex:", myindex)
 
-        IDn=-1
         RechargingStation_Zones_new = {}
         '''
         xynew contains the ID + logical coordniates of the station which is going to be changed in the CSplacement
@@ -284,7 +366,7 @@ def main(par_numberOfStations):
         '''
         for k in range(0,len(xynew)):
             IDn = MatrixCoordinatesToID(xynew[k][0], xynew[k][1])
-            if IDn in zonesMetrics.id and IDn not in RechargingStation_Zones :
+            if IDn in list(zonesMetrics.id) and IDn not in RechargingStation_Zones:
                 tmp=RechargingStation_Zones.copy()
                 tmp[myindex] = IDn
                 if solution_already_exists(tmp, tested_solution) == True :
@@ -293,41 +375,51 @@ def main(par_numberOfStations):
 
                 else:
                     RechargingStation_Zones_new[k]=tmp
-
                     my_sol = sorted( RechargingStation_Zones_new[k])
-                    key = "-".join(str(e) for e in my_sol)
+                    key = "-".join([str(e) for e in my_sol])
                     tested_solution[key] = True
                     # print('not used', key)
 
-        # for k in tested_solution.keys():
-        #     print(k)
-        #
-        # print()
-
         Sol2Test = {}
         sol_index = 0
-        empty = 0
         for k in RechargingStation_Zones_new.keys():
-
             if len(RechargingStation_Zones_new[k]) > 0:
                 Sol2Test[sol_index] = RechargingStation_Zones_new[k]
                 sol_index+=1
+        print ('before', len(RechargingStation_Zones_new))
+        RechargingStation_Zones_new= Sol2Test.copy()
+        print('after', len(RechargingStation_Zones_new))
 
-        # print ('before', len(RechargingStation_Zones_new), empty)
-        # RechargingStation_Zones_new= Sol2Test
-        # print('after', len(RechargingStation_Zones_new))
+        if len(RechargingStation_Zones_new) > 50:
+            print ('ouch')
+            fdebug = open('debug.txt', 'w')
+            fdebug.write('len xwnew: '+ str(len(xynew)) +"\n")
+            fdebug.write('myindex: ' + str(myindex)+"\n")
+            fdebug.write('ID: ' + str(RechargingStation_Zones[myindex])+"\n")
+            fdebug.write('Rech: ' + ' '.join(str(e) for e in RechargingStation_Zones)+"\n")
+            fdebug.write('Direction' + str(directionToFollow) +"\n")
+            fdebug.write('-----\n')
+            for k in RechargingStation_Zones_new.keys():
+                fdebug.write(' '.join(str(e) for e in RechargingStation_Zones_new[k])+'\n')
+            fdebug.close()
+            input()
 
         if len(RechargingStation_Zones_new) == 0 :
             print ('NNI')
-            step+=1
-            continue
+            print ('FD', followDirection)
+            followDirection = False
+            NNI_counter+=1
+            if NNI_counter == 10:
+                break
+        NNI_counter = 0
 
 
+        jobs = []
         start_sim_time = time.time()
         # RechargingStation_Zones_new2 = {}
         # RechargingStation_Zones_new2[0] = RechargingStation_Zones_new[0]
         for i in RechargingStation_Zones_new:
-            # print("RSZ_new",i, RechargingStation_Zones_new[i])
+            print("RSZ_new",i, RechargingStation_Zones_new[i])
             p = Process(target=RunSim,args = (BestEffort,
                                               algorithm.replace("_","-"),
                                               algorithm,
@@ -347,6 +439,13 @@ def main(par_numberOfStations):
                                               direction[i],
                                               city))
 
+            # p = Process(target=RunSim_Toy,args = (
+            #                       RechargingStation_Zones_new[i],
+            #                       i,
+            #                       direction[i],
+            #                       return_dict,
+            #                       ))
+
             jobs.append(p)
             p.start()
 
@@ -355,8 +454,8 @@ def main(par_numberOfStations):
             proc.join()
 
         end_sim_time = time.time() - start_sim_time
-        print('Time for %d sim: %d s'%(len(RechargingStation_Zones_new), end_sim_time))
-
+        print ('Time for %d sim: %d s'%(len(RechargingStation_Zones_new), end_sim_time))
+        print()
 
         followDirection = False
 
@@ -366,24 +465,16 @@ def main(par_numberOfStations):
         for val in return_dict.values():
 
             new_results = val
-            # print("PID:", new_results["ProcessID"], "Dir:",new_results["Direction"])
-            # print("\nNEW STEP")
-            # print(RechargingStation_Zones_new[int(new_results["ProcessID"])])
 
             '''
             Optimality condition
             if results (previous solution) is empity or the optimality condtion is true
             A direction to follow has been found,
-                saving solutions
+            saving solutions
             '''
             #
-            # if results == "" or \
-            #             (new_results["PercDeath"] <= results["PercDeath"]
-            #          and new_results["MeanMeterEnd"] < results["MeanMeterEnd"]):
             fitness_new = cost_function(new_results)
-            if  results == "" or \
-                            fitness_new <= fitness_old:
-
+            if  results == "" or fitness_new <= fitness_old:
                 if results == "" :
                     fit_impr_perc = 100
                     fitness_old = 1e8
@@ -391,50 +482,22 @@ def main(par_numberOfStations):
                     fit_impr_perc = (fitness_old - fitness_new)*100/fitness_old
 
                 followDirection = True
-                directionToFollow = new_results["Direction"]
 
-                fout = open("../output/best_solutions_"+city+"_"+str(numberOfStations)+".txt","a")
+                directionToFollow = new_results["Direction"]
                 RechargingStation_Zones=RechargingStation_Zones_new[int(new_results["ProcessID"])].copy()
 
-                print("\nNEW BEST SOLUTION FOUND")
-                print("**********************************************************************")
-                if(results!=""):
-                    print("Old: %.2f %.2f %.2f"
-                               %(results["PercDeath"],results['MeanMeterEnd'], results["WeightedWalkedDistance"])
-                         )
-                print("New: %.2f %.2f %.2f"
-                               %(new_results["PercDeath"],new_results['MeanMeterEnd'], new_results["WeightedWalkedDistance"])
-                         )
-                print(new_results)
-                print("fit old: %.2f, fit new: %.2f"%(fitness_old, fitness_new))
-                print ('fit_impr_perc', fit_impr_perc)
-                print()
-                print("**********************************************************************")
 
-                fout.write("\nNEW BEST SOLUTION FOUND\n")
-                fout.write("**********************************************************************\n")
-                fout.write("Nsteps: %d"%step+"\n")
-                if(results!=""):
-                    fout.write("Old: %.2f %.2f %.2f\n"
-                               %(results["PercDeath"],results['MeanMeterEnd'], results["WeightedWalkedDistance"])
-                               )
-                fout.write("New: Deaths=%.2f MeanMeterEnd=%.2f wwd=%.2f\n"
-                               %(new_results["PercDeath"], new_results['MeanMeterEnd'], new_results["WeightedWalkedDistance"])
-                           )
-                fout.write(str(RechargingStation_Zones)+"\n")
-                fout.write(str(results)+"\n")
-                fout.write("**********************************************************************\n")
-                fout.close()
+                print_new_solution(results, new_results, fit_impr_perc, fitness_old, fitness_new, RechargingStation_Zones, step)
+                fout = open("../output/best_solutions_"+city+"_"+str(numberOfStations)+".txt","a")
+                write_new_solution(fout, results, new_results, fit_impr_perc, fitness_old, fitness_new,
+                           RechargingStation_Zones, step, end_sim_time)
 
-                results=new_results.copy()
+            results=new_results.copy()
+            fitness_old = fitness_new
 
-                fitness_old = fitness_new
-
-                # print(RechargingStation_Zones)
-                # print(results)
-        print(step)
         step+=1
-    print(str(1e3), "Iteration done in", (datetime.datetime.now() - iniTimeSim)/60, "minutes")
+        print()
+    print(step+NNI_counter, "Iteration done in", (datetime.datetime.now() - iniTimeSim)/60, "minutes")
 
 
 for noz in [5]:
