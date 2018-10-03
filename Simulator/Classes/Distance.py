@@ -42,3 +42,9 @@ class Distance(object):
         self.Zones.append(z)
         
         return
+
+    def setZone(self, Zones):
+        self.Zones = Zones
+
+    def setDistance(self, Distance):
+        self.Distance = Distance

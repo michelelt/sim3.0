@@ -6,7 +6,7 @@ p = os.path.abspath('..')
 sys.path.append(p+"/")
 sys.path.append(p+"/Simulator/")
 
-from Simulator.Simulator import *
+from Simulator.Simulator_DG import *
 import datetime as datetime
 import pickle
 import multiprocessing
@@ -15,6 +15,9 @@ import subprocess
 
 import Simulator.Globals.SupportFunctions as sf
 import Simulator.Globals.GlobalVar as gv
+
+import pprint
+pp = pprint.PrettyPrinter()
 
 import cProfile
 city = 'Torino'
@@ -25,10 +28,10 @@ walkingTreshold = 1000000
 city = "Torino"
 zones = sf.numberOfZones(city)
 algorithm = "max-parking"
-numberOfStations = 5
+numberOfStations = 20
 tankThreshold = 25
 AvaiableChargingStations = 4
-BestEffort = True
+BestEffort = False
 pThreshold = 0.5
 randomInitLvl = False
 return_dict = {}
@@ -37,10 +40,24 @@ ZoneCars = pickle.load( open( "../input/"+ city + "_" + gv.provider +"_ZoneCars.
 DistancesFrom_Zone_Ordered = pickle.load( open( "../input/"+ city + "_" + gv.provider + "_ZoneDistances.p", "rb" ) )
 Stamps_Events = pickle.load( open( "../events/"+ city + "_" + gv.provider + "_sorted_dict_events_obj.pkl", "rb" ) )
 
+# for k in DistancesFrom_Zone_Ordered.keys():
+#       print('key', k)
+# k=2
+# for el in DistancesFrom_Zone_Ordered[k]:
+      # print(type(el))
+      # print('zone',el[0])
+      # print('zones dst', el[1].getZones())
+      # print(el[1].getDistance())
+      # print()
+
+
+
+
 RechargingStation_Zones = sf.loadRecharing(algorithm, numberOfStations, city)
+# RechargingStation_Zones = [1,2,3,4,6]
 print(RechargingStation_Zones)
 
-RunSim(BestEffort,
+zzz = RunSim(BestEffort,
       algorithm.replace("_","-"),
       algorithm,
       AvaiableChargingStations,
@@ -60,3 +77,5 @@ RunSim(BestEffort,
       city)
 
 
+for k in zzz.keys():
+      print(k, zzz[k])

@@ -279,8 +279,6 @@ def coordinates_to_index(coords):
 ###############################################################################
 
 
-
-
 def checkPerimeter(lat,lon):
 
     if(lon > GlobalVar.minLon  and  lon < GlobalVar.MaxLon and lat > GlobalVar.minLat  and  lat< GlobalVar.MaxLat): return True
@@ -442,7 +440,7 @@ def foutname(BestEffort,algorithm,AvaiableChargingStations,numberOfStations,
 def FillDistancesFrom_Recharging_Zone_Ordered(DistancesFrom_Zone_Ordered,\
                                               DistancesFrom_Recharging_Zone_Ordered,\
                                               RechargingStation_Zones):
-    
+    i=0
     for zoneI in DistancesFrom_Zone_Ordered:
         DistancesFrom_Recharging_Zone_Ordered[zoneI] = []
         for DistanceI in DistancesFrom_Zone_Ordered[zoneI]:
@@ -451,8 +449,11 @@ def FillDistancesFrom_Recharging_Zone_Ordered(DistancesFrom_Zone_Ordered,\
             for RandomZonesI in RandomZones:
                 if(RandomZonesI in RechargingStation_Zones):
                     if(DistanceValid==""):
-                        DistanceValid = (DistanceI[0],Simulator.Classes.Distance.Distance(DistanceI[0]))
+                        newZone = Simulator.Classes.Distance.Distance(DistanceI[1].getDistance())
+                        DistanceValid = (DistanceI[0],newZone)
+
                     DistanceValid[1].appendZone(RandomZonesI)
+
             if(DistanceValid!=""):
                 DistancesFrom_Recharging_Zone_Ordered[zoneI].append(DistanceValid)
     

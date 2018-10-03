@@ -20,6 +20,7 @@ import Simulator.Globals.SupportFunctions as sf
 import Simulator.Globals.GlobalVar as gv
 
 
+
 DistancesFrom_Recharging_Zone_Ordered = {}
 
 
@@ -68,10 +69,10 @@ def ParkCar(RechargingStation_Zones, DistancesFrom_Zone_Ordered, ZoneID_Zone, Bo
     if(BestEffort
        and BookingEndPosition in RechargingStation_Zones
        and pThreshold >= p):
-
+        
         DistanceI = DistancesFrom_Zone_Ordered[BookingEndPosition][0]        
         DistanceV = DistanceI[1].getDistance()
-        print(DistanceV)
+
         ZoneI_ID = DistanceI[1].getZones()[0]
         ZoneI = ZoneID_Zone[ZoneI_ID]        
         Found = ZoneI.getParkingAtRechargingStations(BookedCar)
@@ -85,9 +86,10 @@ def ParkCar(RechargingStation_Zones, DistancesFrom_Zone_Ordered, ZoneID_Zone, Bo
         #print("PROBLEMA: %d"%BookedCar.getBatteryLvl())
         Iter=0
         ToRecharge = True
-        for DistanceI in  DistancesFrom_Recharging_Zone_Ordered[BookingEndPosition]:
+        for DistanceI in  DistancesFrom_Recharging_Zone_Ordered[BookingEndPosition]:    
             Iter +=1    
             Distance = DistanceI[1].getDistance()
+
             if(Distance > walkingTreshold): break            
             RandomZones = DistanceI[1].getRandomZones()
         
@@ -153,8 +155,8 @@ def RunSim(BestEffort,
 
     numberOfStations = len(RechargingStation_Zones)
 
-    policy, fileID, fname = foutname(BestEffort,algorithmName,AvaiableChargingStations,numberOfStations,tankThreshold,
-                                     walkingTreshold, pThreshold, kwh)
+#    policy, fileID, fname = foutname(BestEffort,algorithmName,AvaiableChargingStations,numberOfStations,tankThreshold,
+#                                     walkingTreshold, pThreshold, kwh)
 
     
     NRecharge = 0
@@ -174,6 +176,9 @@ def RunSim(BestEffort,
     FillDistancesFrom_Recharging_Zone_Ordered(DistancesFrom_Zone_Ordered,\
                                               DistancesFrom_Recharging_Zone_Ordered,\
                                               RechargingStation_Zones)
+    
+
+
             
     if randomStrtingLevel == True :
         for zone in ZoneCars:
@@ -181,21 +186,9 @@ def RunSim(BestEffort,
                 for car in ZoneCars[zone]:
                     car.BatteryCurrentCapacity = round(random.SystemRandom().random(),2) * car.BatteryMaxCapacity
 
-
-    # for k in DistancesFrom_Recharging_Zone_Ordered.keys():
-    #     print(k)
-    #
-    # for el in DistancesFrom_Recharging_Zone_Ordered[1]:
-    #     print('eucle', el[0])
-    #     print('zones', el[1].getZones())
-    #     print(el[1].getDistance())
-    #     print()
-
     
-
-    output_directory ="../output/Simulation_"+str(lastS)+"/"
-    if not os.path.exists(output_directory):
-        os.makedirs(output_directory)
+    output_directory ="../output/Simulation_"+str(lastS)+"/"         
+    '''   
     fout = open(output_directory+fname,"w")
                 
     fout2 = open(output_directory+"debugproblem.txt","w")
@@ -213,7 +206,7 @@ def RunSim(BestEffort,
     
     
     fout.write("Type;ToRecharge;Recharged;ID;Lvl;Distance;Iter;Recharge;StartRecharge;Stamp;EventCoords;ZoneC;Discharge;TripDistance;FileID;extractedP;ZoneID;OccupiedCS\n")
-
+    '''
     i=0
     occupiedCS = 0
     #with click.progressbar(Stamps_Events, length=len(Stamps_Events)) as bar:
@@ -221,7 +214,7 @@ def RunSim(BestEffort,
         for Event in Stamps_Events[Stamp]:
             i+=1
             if(Event.type == "s"):
-                fout2.write("%d %d \n"%(Stamp,ActualBooking))#,TotalCar1,TotalCar2))
+                #fout2.write("%d %d \n"%(Stamp,ActualBooking))#,TotalCar1,TotalCar2))
                 ActualBooking +=1
                 BookingStarting_Position = sf.coordinates_to_index(Event.coordinates)
                 BookingID = Event.id_booking
@@ -239,7 +232,7 @@ def RunSim(BestEffort,
                 ID = NearestCar.getID()
                 ZoneC = zoneIDtoCoordinates(ZoneID)
 
-
+                '''
                 EventCoords = Event.coordinates
                 #Loop Unrooling
                 outputString  = "s;"
@@ -262,7 +255,7 @@ def RunSim(BestEffort,
                 outputString += "%d\n"% occupiedCS
 
                 fout.write(outputString)
-
+                '''
                 if(DistanceV> 0):
                     MeterRerouteStart.append(DistanceV)
                 NStart+=1
@@ -277,14 +270,13 @@ def RunSim(BestEffort,
                                                                        BookingEndPosition, BookedCar, tankThreshold, walkingTreshold, BestEffort,\
                                                                        pThreshold)
 
-
                 #extra consuption if there is rerouting
                 if DistanceV > 0:
                     BookedCar.setStartPosition(Event.coordinates)
                     DiscargeR, TripDistanceR = BookedCar.Discharge(sf.zoneIDtoCoordinates(ZoneID))
                     Discarge += DiscargeR
                     TripDistance += TripDistanceR
-                    
+
                     #Please notice that TripDistanceR > Distance because TripDistanceR keeps in account the corr. fact
                     #Distance is dist(centre_arrival_Zone, centre_leaving_zone), so in this distance is biased by an error of 150m
                     # print("Distnace", Distance)
@@ -311,7 +303,7 @@ def RunSim(BestEffort,
 
                 if Recharged == True :
                     occupiedCS += 1
-
+                '''
                 EventCoords = Event.coordinates
                 #Loop Unrooling
                 outputString  = "e;"
@@ -334,7 +326,7 @@ def RunSim(BestEffort,
                 outputString += "%d\n"% occupiedCS
                 
                 fout.write(outputString)
-
+                '''
 
                 #fout.write(dict_to_string(d))
 
@@ -355,16 +347,16 @@ def RunSim(BestEffort,
             #     print ("Noooooo")
             #     break
 
-    b = datetime.datetime.now()
-    c = (b - a).total_seconds()
+    #b = datetime.datetime.now()
+    #c = (b - a).total_seconds()
     #print("End Simulation: "+str(int(c)))
 
 
-    fout.close()
-    fout2.close()
+#    fout.close()
+#    fout2.close()
 
 
-    
+    #LV scommentato
     if return_dict == None :
         os.system('scp %s bigdatadb:/data/03/Carsharing_data/output/Simulation_%d/%s'%(output_directory+fname,lastS,fname))
         os.system('cat %s | ssh bigdatadb hdfs dfs -put -f - Simulator/output/Simulation_%s/%s' %(output_directory+fname,lastS,fname))
@@ -385,6 +377,7 @@ def RunSim(BestEffort,
         MeanMeterStart = np.mean(np.array(MeterRerouteStart))
 
         RetValues = {}
+        RetValues["Config"] = RechargingStation_Zones#LV
         RetValues["ProcessID"] = processID
         RetValues["Direction"] = direction
         RetValues["PercRerouteEnd"] = PercRerouteEnd
@@ -411,4 +404,4 @@ def RunSim(BestEffort,
 	#os.system('ssh bigdatadb hdfs dfs -put /data/03/Carsharing_data/output/Simulation_%d/%s Simulator/output/Simulation_%d/%s &' %(lastS,fname,lastS,fname))
     #os.system('ssh bigdatadb cat /data/03/Carsharing_data/output/Simulation_%d/%s | hdfs dfs -put -f - Simulator/output/Simulation_%s/%s &' %(lastS,fname,lastS,fname))
     
-    return RetValues
+    return
