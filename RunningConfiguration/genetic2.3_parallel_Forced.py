@@ -34,7 +34,7 @@ algorithm = "max-parking"
 numberOfStations = 18
 tankThreshold = 25
 AvaiableChargingStations = 4
-BestEffort = True
+BestEffort = False
 pThreshold = 1
 randomInitLvl = False
 return_dict = {}
@@ -71,10 +71,10 @@ refer_time = int(time.time())
 
 
 diroutput = '../output/'
-filename = 'genetico_best_'+str(refer_time)+'_'+ str(pure_elitist)+'.txt'
+filename = 'genetico_best_Forced_'+str(refer_time)+'_'+ str(pure_elitist)+'.txt'
 fbest = open(diroutput+filename, "w+")
 
-filename = 'genetico_log'+str(refer_time)+'.txt'
+filename = 'genetico_log_Forced_'+str(refer_time)+'.txt'
 flog = open(diroutput+filename, "w+")
 
 not_improving=0

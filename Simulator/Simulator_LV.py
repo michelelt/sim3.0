@@ -399,7 +399,7 @@ def RunSim(BestEffort,
         output_folder += current_folder[i]+"/"
     output_folder+="output/"
 
-    print('PID %d, time: %.3f'%(processID, time.time()-time_init))
+    # print('PID %d, time: %.3f'%(processID, time.time()-time_init))
     #do not use
 	#os.system('ssh bigdatadb hdfs dfs -put /data/03/Carsharing_data/output/Simulation_%d/%s Simulator/output/Simulation_%d/%s &' %(lastS,fname,lastS,fname))
     #os.system('ssh bigdatadb cat /data/03/Carsharing_data/output/Simulation_%d/%s | hdfs dfs -put -f - Simulator/output/Simulation_%s/%s &' %(lastS,fname,lastS,fname))

@@ -3,7 +3,7 @@ import os
 p = os.path.abspath('..')
 sys.path.append(p+"/")
 
-from Simulator.Simulator import *
+from Simulator.Simulator_DG import *
 from Simulator.Globals.GlobalVar import * 
 import datetime as datetime
 import pickle
@@ -193,7 +193,7 @@ def exploreDirection(directionToFollow):
     if directionToFollow[0] == 0: ##East
         # print("East")
         while True :
-            print("MC2ID E", MatrixCoordinatesToID(center[0]-(i+1), center[1]))
+            # print("MC2ID E", MatrixCoordinatesToID(center[0]-(i+1), center[1]))
             if MatrixCoordinatesToID(center[0]-(i+1), center[1]) not in list(zonesMetrics.id) \
                     or len(xynew) > gv.NColumns - center[0]%gv.NColumns:
                 return xynew, direction
@@ -214,7 +214,7 @@ def exploreDirection(directionToFollow):
     elif directionToFollow[0] == 2: ##West
         # print("West")
         while True :
-            print("MC2ID W",MatrixCoordinatesToID(center[0]+(i+1), center[1]))
+            # print("MC2ID W",MatrixCoordinatesToID(center[0]+(i+1), center[1]))
             if MatrixCoordinatesToID(center[0]+(i+1), center[1]) not in list(zonesMetrics.id)\
                      or len(xynew) > gv.NColumns - center[0]%gv.NColumns:
                 return xynew, direction
@@ -327,7 +327,7 @@ def main(par_numberOfStations):
     fit_impr_perc = 100
     manager = multiprocessing.Manager()
     NNI_counter = 0
-    fitness_old = 1000
+    fitness_best = 1e12
 
     global followDirection
     followDirection = False
@@ -463,6 +463,7 @@ def main(par_numberOfStations):
         '''
         # Results analysis
         '''
+
         for val in return_dict.values():
 
             new_results = val
@@ -475,7 +476,7 @@ def main(par_numberOfStations):
             '''
             #
             fitness_new = cost_function(new_results)
-            if  results == "" or fitness_new <= fitness_old:
+            if  results == "" or fitness_new < fitness_best:
                 if results == "" :
                     fit_impr_perc = 100
                     fitness_old = 1e8
@@ -489,12 +490,12 @@ def main(par_numberOfStations):
 
 
                 print_new_solution(results, new_results, fit_impr_perc, fitness_old, fitness_new, RechargingStation_Zones, step)
-                fout = open("../output/best_solutions_"+city+"_"+str(numberOfStations)+"_"+refer_time+".txt","a")
+                fout = open("../output/best_solutions_"+city+"_"+str(numberOfStations)+"_"+str(refer_time)+".txt","a")
                 write_new_solution(fout, results, new_results, fit_impr_perc, fitness_old, fitness_new,
                            RechargingStation_Zones, step, end_sim_time)
 
-            results=new_results.copy()
-            fitness_old = fitness_new
+                results=new_results.copy()
+                fitness_best = fitness_new
 
         step+=1
         print()
@@ -502,11 +503,7 @@ def main(par_numberOfStations):
 
 
 for noz in [5]:
-   main(noz)
-
-
-
-
-
+    print('Server')
+    main(noz)
 
 

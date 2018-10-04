@@ -43,7 +43,7 @@ def readConfigFile(city):
         city = str(input('Insert city: '))
         if city == 'default':
             city = str(input('DEFAULT MODE, Insert city: '))
-            config = open(p+"/input/" + city + "_config.txt", "w")
+            config = open(p+"/input/" + city + "_config.txt", "w") 
 
             config.write("city="+city.lower().title()+"\n")
 
@@ -53,7 +53,7 @@ def readConfigFile(city):
             initdate = "2017-09-05T00:00:00"
             config.write("initdate=" + initdate + "\n")
 
-            finaldate = "2017-09-13T00:00:00"
+            finaldate = "2017-11-02T00:00:00"
             config.write("finaldate=" + finaldate + "\n")
 
             fleetSize = 'mean'
