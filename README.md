@@ -1,4 +1,4 @@
-# Car sharing simulator ho fatto una porco dio di git
+# Car sharing simulator
 
 This simulator is a trace-drive simulator which relies on the real data coming from Car2go, a car sharing provider working in 25 cities spread around the world.
 Please notice that the code is available, but the data are subjected to some restrictions. If you are interested, please contact: michele.cocca@polito.it
