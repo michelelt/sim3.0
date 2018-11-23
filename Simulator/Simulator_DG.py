@@ -117,7 +117,7 @@ def WriteOutHeader(file, parametersDict):
     
     HeaderOreder = ["Provider", "Policy", "Algorithm", "ChargingStations", 
      "AvaiableChargingStations", "TankThreshold", "WalkingTreshold",
-     "pThreshold"]
+     "pThreshold", "kwh", "gamma"]
     
     for key in HeaderOreder:
         file.write(key + ":" + str(parametersDict[key])+"\n")
@@ -153,7 +153,7 @@ def RunSim(BestEffort,
     numberOfStations = len(RechargingStation_Zones)
 
     policy, fileID, fname = foutname(BestEffort,algorithmName,AvaiableChargingStations,numberOfStations,tankThreshold,
-                                     walkingTreshold, pThreshold, kwh)
+                                     walkingTreshold, pThreshold, kwh, gamma)
 
     
     NRecharge = 0
@@ -208,7 +208,8 @@ def RunSim(BestEffort,
     "TankThreshold":tankThreshold,
     "WalkingTreshold":  walkingTreshold,
     "pThreshold": pThreshold,
-    "kwh": kwh})
+    "kwh": kwh,
+    "gamma": gamma})
     
     
     fout.write("Type;ToRecharge;Recharged;ID;Lvl;Distance;Iter;Recharge;StartRecharge;Stamp;EventCoords;ZoneC;Discharge;TripDistance;FileID;extractedP;ZoneID;OccupiedCS\n")
@@ -278,11 +279,11 @@ def RunSim(BestEffort,
 
 
                 #extra consuption if there is rerouting
-                if DistanceV > 0:
-                    BookedCar.setStartPosition(Event.coordinates)
-                    DiscargeR, TripDistanceR = BookedCar.Discharge(sf.zoneIDtoCoordinates(ZoneID))
-                    Discarge += DiscargeR
-                    TripDistance += TripDistanceR
+                # if DistanceV > 0:
+                #     BookedCar.setStartPosition(Event.coordinates)
+                #     DiscargeR, TripDistanceR = BookedCar.Discharge(sf.zoneIDtoCoordinates(ZoneID))
+                #     Discarge += DiscargeR
+                #     TripDistance += TripDistanceR
                     
                     #Please notice that TripDistanceR > Distance because TripDistanceR keeps in account the corr. fact
                     #Distance is dist(centre_arrival_Zone, centre_leaving_zone), so in this distance is biased by an error of 150m
@@ -407,7 +408,7 @@ def RunSim(BestEffort,
 
     print('PID %d, time: %.3f'%(processID, time.time()-time_init))
     #do not use
-	#os.system('ssh bigdatadb hdfs dfs -put /data/03/Carsharing_data/output/Simulation_%d/%s Simulator/output/Simulation_%d/%s &' %(lastS,fname,lastS,fname))
+    #os.system('ssh bigdatadb hdfs dfs -put /data/03/Carsharing_data/output/Simulation_%d/%s Simulator/output/Simulation_%d/%s &' %(lastS,fname,lastS,fname))
     #os.system('ssh bigdatadb cat /data/03/Carsharing_data/output/Simulation_%d/%s | hdfs dfs -put -f - Simulator/output/Simulation_%s/%s &' %(lastS,fname,lastS,fname))
     
     return RetValues

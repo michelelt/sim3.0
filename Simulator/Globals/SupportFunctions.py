@@ -221,6 +221,40 @@ def numberOfZones(city):
 
 ###############################################################################
 
+def createListConfig(BestEffort_list, AvaiableChargingStations_list, algorithm_list,
+    numberOfStations_list, tankThresholds_list, pThresholds, kwh_list, gamma_list):
+
+    settings_list = []
+
+    for BestEffort in BestEffort_list:
+        for AvaiableChargingStations in AvaiableChargingStations_list:
+            for algorithm in algorithm_list:
+                for numberOfStations in numberOfStations_list:
+                    for tankThreshold in tankThresholds_list:
+                        for pt in pThresholds:
+
+                            if validSimulation(BestEffort, tankThreshold, pt) == False:
+                                continue
+
+                            for kwh in kwh_list:
+                                for gamma in gamma_list:
+                                    d = { 
+                                    'BestEffort': BestEffort,
+                                    'AvaiableChargingStations': AvaiableChargingStations,
+                                    'Algorithm' : algorithm,
+                                    'NumberOfStations': numberOfStations,
+                                    'TankThreshold': tankThreshold,
+                                    'pt': pt,
+                                    'kwh': kwh, 
+                                    'gamma': gamma
+                                    }
+                                    settings_list.append(d)
+    return settings_list
+
+
+###############################################################################
+
+
 def validSimulation(BestEffort, tankThreshold_valid, pThresholdCheck) :
 
    '''
@@ -250,7 +284,7 @@ def validSimulation(BestEffort, tankThreshold_valid, pThresholdCheck) :
    ##free Floating only and p=100
    if BestEffort == True \
        and tankThreshold_valid == -1 \
-       and pThresholdCheck != 100 :
+       and pThresholdCheck != 1 :
        #print(BestEffort, tankThreshold, p)
        return False
 
@@ -407,7 +441,7 @@ def loadRecharing(method, numberOfStations, city):
     return Stations
 
 def foutname(BestEffort,algorithm,AvaiableChargingStations,numberOfStations,
-             tankThreshold,walkingTreshold, pThreshold, kwh):
+             tankThreshold,walkingTreshold, pThreshold, kwh, gamma):
 
     foutname = ""
 
@@ -432,7 +466,8 @@ def foutname(BestEffort,algorithm,AvaiableChargingStations,numberOfStations,
              str(tankThreshold) +"_"+\
              str(walkingTreshold) + "_" +\
              str(int(pThreshold*100)) + "_" +\
-             str(int(kwh))
+             str(int(kwh)) + "_" +\
+             str(int(gamma*100))
 
     return policy, fileid,fileid+".txt"
 

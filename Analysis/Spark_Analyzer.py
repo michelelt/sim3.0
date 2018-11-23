@@ -8,7 +8,7 @@ import collections
 import pickle
 
 header = ["Provider","Policy","Algorithm","Zones","Acs","TankThreshold","WalkingThreshold", "pThreshold", "TypeS", "TypeE",
-          "kwh","AvgWalkedDistance","MedianWalkedDistance", "AvgWalkedDistanceGlobal", "MedianWalkedDistanceGlobal",
+          "kwh","gamma","AvgWalkedDistance","MedianWalkedDistance", "AvgWalkedDistanceGlobal", "MedianWalkedDistanceGlobal",
           "AvgSOC", "MedianSOC", "AmountRecharge","AmountRechargeForced","AmountRechargeForcedFail",
           "AmountRechargeBestEffort", "AmountRechargePerc", "AvgTimeInStation", "MedianTimeInStation",
           "Deaths","Reroute","ReroutePerc","ReroutePercofRecharge", "LazyUsersPerc", "AvgStationOccupancy"]
@@ -29,7 +29,8 @@ def dict_to_tpl_str(s):
              int(s["TankThreshold"]),
              int(s["WalkingThreshold"]),
              float(s["pThreshold"]),
-             float(s["kwh"])
+             float(s["kwh"]),
+             float(s["gamma"])
     )
     
     
@@ -105,6 +106,7 @@ def mapf2(x):
     s["WalkingThreshold"] = keysplit[6]
     s["pThreshold"] = keysplit[7]
     s["kwh"] = keysplit[8]
+    s["gamma"] = keysplit[9s]
 
     s["TypeS"] = len(df[df["Type"]=='s'])                            
     s["TypeE"] = len(df[df["Type"]=='e'])
