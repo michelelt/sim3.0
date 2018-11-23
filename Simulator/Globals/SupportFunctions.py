@@ -242,8 +242,8 @@ def createListConfig(BestEffort_list, AvaiableChargingStations_list, algorithm_l
                                     'BestEffort': BestEffort,
                                     'AvaiableChargingStations': AvaiableChargingStations,
                                     'Algorithm' : algorithm,
-                                    'NumberOfStations': numberOfStations,
-                                    'TankThreshold': tankThreshold,
+                                    'numberOfStations': numberOfStations,
+                                    'tankThreshold': tankThreshold,
                                     'pt': pt,
                                     'kwh': kwh, 
                                     'gamma': gamma

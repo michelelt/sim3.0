@@ -31,11 +31,13 @@ class Car(object):
         self.kwh = 2
         self.cut_hour_perc = 0.7
         self.reduction_factor_kwh = 0.1
+        self.gamma = 0
 
 
+    def setGamma(self, gamma): self.gamma = gamma
+    def getGamma(self): return self.gamma
 
     def setRechKwh(self, kwh): self.kwh = kwh
-
     def getRechKwh(self): return self.kwh
 
     def setInStation(self):
@@ -63,7 +65,7 @@ class Car(object):
         
         starting_value = self.BatteryCurrentCapacity
         duration = (CurrentStamp-self.StartRecharge)/(60.0*60.0) #in hour
-        delta_c = duration * kw
+        delta_c = duration * kw * (1+self.gamma)
 
 
         # '''recharge linear to 0-70 %, unlinear from 70 to 100'''

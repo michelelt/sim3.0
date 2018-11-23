@@ -6,7 +6,7 @@ p = os.path.abspath('..')
 sys.path.append(p+"/")
 sys.path.append(p+"/Simulator/")
 
-from Simulator.Simulator import *
+from Simulator.Simulator_DG import *
 import datetime as datetime
 import pickle
 import multiprocessing
@@ -16,7 +16,8 @@ import subprocess
 import Simulator.Globals.SupportFunctions as sf
 import Simulator.Globals.GlobalVar as gv
 
-city = sys.argv[1]
+# city = sys.argv[1]
+city = 'Torino'
 gv.init()
 sf.assingVariables(city)
 
@@ -44,7 +45,8 @@ def main():
     BestEffort_list = [True]
     algorithm_list = ["max-parking"]
     numberOfStations_list = []
-    maxZones = numeberOfZones(gv.city)
+    # maxZones = numeberOfZones(gv.city)
+    maxZones = 261
     numberOfStations_list = []
     for i in range(2                       , round(maxZones*0.05) + 1, 1):  numberOfStations_list.append(i)
     for i in range(round(maxZones*0.05) + 2, round(maxZones*0.1)  + 1, 2): numberOfStations_list.append(i)
@@ -83,7 +85,6 @@ def main():
     c = (b - a).total_seconds()
     print("End Loading Cars: "+str(int(c)) + "\n")
 
-
     batcmd = 'ssh bigdatadb hadoop fs -ls /user/cocca/Simulator/output/' #Solo per controllare il ticket
     lastS = -1
     try:
@@ -97,7 +98,6 @@ def main():
            Please log in the bigdata server to request kerberos Token")
            exit(-1)
     print("#END Loading#\n")
-
 
     print("Ouput in output/Simulation_%d"%lastS)
     print("Ouput in output_analysis/Simulation_%d\n"%lastS)
@@ -163,112 +163,100 @@ def main():
 
     print("Total Simulations: %d"%(len(configurations)))
 
+    for config in configurations:
 
+      for z in ZoneCars.keys():
+        if len(ZoneCars[z]) > 0:
+            for i in range (len(ZoneCars[z])):
+                ZoneCars[z][i].setRechKwh(config['kwh'])
+                ZoneCars[z][i].setGamma(config['gamma'])
 
-    # for BestEffort in BestEffort_list:
-    #     for AvaiableChargingStations in AvaiableChargingStations_list:
-    #         for algorithm in algorithm_list:
-    #             print("Running simulations:")
-    #             for numberOfStations in numberOfStations_list:
-    #                 for tankThreshold in tankThresholds_list:
-    #                     for pt in pThresholds:
+      lastS = 100
 
-    #                         for kwh in kwh_list:
-    #                             for z in ZoneCars.keys():
-    #                                 if len(ZoneCars[z]) > 0:
-    #                                     for i in range (len(ZoneCars[z])):
-    #                                         ZoneCars[z][i].setRechKwh(kwh)
-    #                                         zoneCars[z][i].setGamma(gamma)
-
-
-
-    #                             if sf.validSimulation(BestEffort, tankThreshold, pt) == False:
-    #                                 continue
-    #                             RechargingStation_Zones = loadRecharing(algorithm, numberOfStations, city)
-    #                             p = Process(target=RunSim,args = (BestEffort,
-    #                                                               algorithm.replace("_","-"),
-    #                                                               algorithm,
-    #                                                               AvaiableChargingStations,
-    #                                                               tankThreshold,
-    #                                                               walkingTreshold,
-    #                                                               ZoneCars,
-    #                                                               RechargingStation_Zones,
-    #                                                               Stamps_Events,
-    #                                                               DistancesFrom_Zone_Ordered,
-    #                                                               lastS,
-    #                                                               pt,
-    #                                                               kwh,
-    #                                                               randomInitLvl,
-    #                                                               None,
-    #                                                               -1,
-    #                                                               None,
-    #                                                               city
-    #                                                               ))
+      RechargingStation_Zones = loadRecharing(config["Algorithm"], config["numberOfStations"], city)
+      p = Process(target=RunSim,args = (config["BestEffort"],
+                                        config["Algorithm"].replace("_","-"),
+                                        config["Algorithm"],
+                                        config["AvaiableChargingStations"],
+                                        config["tankThreshold"],
+                                        walkingTreshold,
+                                        ZoneCars,
+                                        RechargingStation_Zones,
+                                        Stamps_Events,
+                                        DistancesFrom_Zone_Ordered,
+                                        lastS,
+                                        config["pt"],
+                                        config['kwh'],
+                                        config['gamma'],
+                                        randomInitLvl,
+                                        None,
+                                        -1,
+                                        None,
+                                        city
+                                        ))
 
 
 
 
-    #                             nsimulations +=1
 
-    #                             jobs.append(p)
-    #                             p.start()
+      nsimulations +=1
 
+      jobs.append(p)
+      p.start()
 
-    #                             if(len(jobs)>120):
-    #                                 time.sleep(.1) #only to print after other prints
-    #                                 print("\nWaiting for %d simulations"%len(jobs))
-    #                                 with click.progressbar(jobs, length=len(jobs)) as bar:
-    #                                     for proc in bar:
-    #                                         proc.join()
-    #                                 jobs.clear()
-
-
-    #         print("")
-
-    # time.sleep(.1) #only to print after other prints
-    # print("\nWaiting for %d simulations"%len(jobs))
-    # with click.progressbar(jobs, length=len(jobs)) as bar:
-    #     for proc in bar:
-    #         proc.join()
-
-    # b = datetime.datetime.now()
-    # c = (b - aglobal).total_seconds()
+      if(len(jobs)>120):
+          time.sleep(.1) #only to print after other prints
+          print("\nWaiting for %d simulations"%len(jobs))
+          with click.progressbar(jobs, length=len(jobs)) as bar:
+              for proc in bar:
+                  proc.join()
+          jobs.clear()
 
 
-    # if(check_and_run_missing(lastS,Stamps_Events,DistancesFrom_Zone_Ordered, ZoneCars, city)<0):
-    #     exit(-1)
+    time.sleep(.1) #only to print after other prints
+    print("\nWaiting for %d simulations"%len(jobs))
+    with click.progressbar(jobs, length=len(jobs)) as bar:
+        for proc in bar:
+            proc.join()
+
+    b = datetime.datetime.now()
+    c = (b - aglobal).total_seconds()
 
 
-    # print("Run %d Simulations took %d seconds"%(nsimulations,c))
+    if(check_and_run_missing(lastS,Stamps_Events,DistancesFrom_Zone_Ordered, ZoneCars, city)<0):
+        exit(-1)
 
-    # print("\nStart Spark Analysis")
+
+    print("Run %d Simulations took %d seconds"%(nsimulations,c))
+
+    print("\nStart Spark Analysis")
+    a = datetime.datetime.now()
+
+    os.system('scp ../Analysis/Spark_Analyzer.py bigdatadb:/tmp/CarSharing_Spark_Analyzer.py')
+    os.system('ssh bigdatadb export JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk-amd64/jre/')
+    os.system('ssh bigdatadb spark2-submit --master yarn --deploy-mode client /tmp/CarSharing_Spark_Analyzer.py %d'%lastS)
+    os.system('scp bigdatadb:/data/03/Carsharing_data/output_analysis/Simulation_%d/out_analysis.txt ../output_analysis/Simulation_%d/'%(lastS,lastS))
+
+    os.system('scp bigdatadb:/tmp/Carsharing_Output/out_analysis.txt ../output_analysis/Simulation_%d/'%lastS)
+    os.system('cat ../output_analysis/Simulation_%d/out_analysis.txt | ssh bigdatadb hdfs dfs -put -f - Simulator/output/Simulation_%s/out_analysis.txt' %(lastS,lastS))
+
+
+
+    b = datetime.datetime.now()
+    c = (b - a).total_seconds()
+    #
+    # print("Analyze data with Spark took %d seconds" %(c))
+    # print("\nPlot graphs")
     # a = datetime.datetime.now()
-
-    # os.system('scp ../Analysis/Spark_Analyzer.py bigdatadb:/tmp/CarSharing_Spark_Analyzer.py')
-    # os.system('ssh bigdatadb export JAVA_HOME=/usr/lib/jvm/java-1.8.0-openjdk-amd64/jre/')
-    # os.system('ssh bigdatadb spark2-submit --master yarn --deploy-mode client /tmp/CarSharing_Spark_Analyzer.py %d'%lastS)
-    # os.system('scp bigdatadb:/data/03/Carsharing_data/output_analysis/Simulation_%d/out_analysis.txt ../output_analysis/Simulation_%d/'%(lastS,lastS))
-
-    # os.system('scp bigdatadb:/tmp/Carsharing_Output/out_analysis.txt ../output_analysis/Simulation_%d/'%lastS)
-    # os.system('cat ../output_analysis/Simulation_%d/out_analysis.txt | ssh bigdatadb hdfs dfs -put -f - Simulator/output/Simulation_%s/out_analysis.txt' %(lastS,lastS))
-
-
-
+    # os.system('python3 ../Analysis/plot_heatmap.py %d'%lastS)
     # b = datetime.datetime.now()
     # c = (b - a).total_seconds()
-    # #
-    # # print("Analyze data with Spark took %d seconds" %(c))
-    # # print("\nPlot graphs")
-    # # a = datetime.datetime.now()
-    # # os.system('python3 ../Analysis/plot_heatmap.py %d'%lastS)
-    # # b = datetime.datetime.now()
-    # # c = (b - a).total_seconds()
-    # # print("Plot graphs took %d seconds" %(c))
-    # #
-    # print("Ouput in output/Simulation_%d"%lastS)
-    # print("Ouput in output_analysis/Simulation_%d"%lastS)
+    # print("Plot graphs took %d seconds" %(c))
+    #
+    print("Ouput in output/Simulation_%d"%lastS)
+    print("Ouput in output_analysis/Simulation_%d"%lastS)
 
-    return configurations
+    return 
         
-ccc = main()
+main()
 

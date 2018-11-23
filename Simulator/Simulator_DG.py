@@ -139,6 +139,7 @@ def RunSim(BestEffort,
     lastS,
     pThreshold,
     kwh,
+    gamma,
     randomStrtingLevel,
     return_dict,
     processID,
@@ -154,6 +155,8 @@ def RunSim(BestEffort,
 
     policy, fileID, fname = foutname(BestEffort,algorithmName,AvaiableChargingStations,numberOfStations,tankThreshold,
                                      walkingTreshold, pThreshold, kwh, gamma)
+
+
 
     
     NRecharge = 0
