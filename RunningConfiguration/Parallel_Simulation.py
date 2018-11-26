@@ -45,20 +45,22 @@ def main():
     BestEffort_list = [True]
     algorithm_list = ["max-parking"]
     numberOfStations_list = []
-    # maxZones = numeberOfZones(gv.city)
-    maxZones = 261
+    maxZones = numeberOfZones(gv.city)
     numberOfStations_list = []
     for i in range(2                       , round(maxZones*0.05) + 1, 1):  numberOfStations_list.append(i)
     for i in range(round(maxZones*0.05) + 2, round(maxZones*0.1)  + 1, 2): numberOfStations_list.append(i)
     for i in range(round(maxZones*0.1)  + 2, round(maxZones*0.3)  + 1, 5): numberOfStations_list.append(i)
     for i in range(2, round(maxZones*0.3), 2): numberOfStations_list.append(i)
+    numberOfStations_list = [5,10,15,20,25,30,35,40,45,50,55,60,65,70,75]
     AvaiableChargingStations_list = [4] #PALINE PER ZONA
     pThresholds = [0.5]
     tankThresholds_list = [25]
     walkingTreshold = 1000000
     randomInitLvl = False
     kwh_list = [2]
-    gamma_list = [0.25, 0.5, 0.75, 1]
+    # gamma_list = [0, 0.25, 0.5, 0.75, 1]
+    gamma_list = [1, 5, 10]
+
     
     print("#START Loading#")
     aglobal = datetime.datetime.now()
@@ -146,6 +148,11 @@ def main():
        str_out+= str(val*100)+" "
     str_out+= "\n"
 
+    str_out += "gamma: "
+    for val in gamma_list:
+       str_out+= str(val*100)+" "
+    str_out+= "\n"
+
 
     fout.write(str_out)
     fout.close()
@@ -171,8 +178,6 @@ def main():
                 ZoneCars[z][i].setRechKwh(config['kwh'])
                 ZoneCars[z][i].setGamma(config['gamma'])
 
-      lastS = 100
-
       RechargingStation_Zones = loadRecharing(config["Algorithm"], config["numberOfStations"], city)
       p = Process(target=RunSim,args = (config["BestEffort"],
                                         config["Algorithm"].replace("_","-"),
@@ -194,10 +199,6 @@ def main():
                                         None,
                                         city
                                         ))
-
-
-
-
 
       nsimulations +=1
 

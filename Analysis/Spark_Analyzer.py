@@ -106,7 +106,7 @@ def mapf2(x):
     s["WalkingThreshold"] = keysplit[6]
     s["pThreshold"] = keysplit[7]
     s["kwh"] = keysplit[8]
-    s["gamma"] = keysplit[9s]
+    s["gamma"] = keysplit[9]
 
     s["TypeS"] = len(df[df["Type"]=='s'])                            
     s["TypeE"] = len(df[df["Type"]=='e'])

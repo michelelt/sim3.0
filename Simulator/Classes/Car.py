@@ -65,7 +65,7 @@ class Car(object):
         
         starting_value = self.BatteryCurrentCapacity
         duration = (CurrentStamp-self.StartRecharge)/(60.0*60.0) #in hour
-        delta_c = duration * kw * (1+self.gamma)
+        delta_c = duration * kw 
 
 
         # '''recharge linear to 0-70 %, unlinear from 70 to 100'''
@@ -112,7 +112,7 @@ class Car(object):
             distance *= gv.CorrectiveFactor 
         
         dist_km = distance/1000
-        dc = dist_km * self.kwh_km
+        dc = dist_km * self.kwh_km * (1+self.gamma)
 
         self.BatteryCurrentCapacity = self.BatteryCurrentCapacity - dc
         if self.BatteryCurrentCapacity <=0 :

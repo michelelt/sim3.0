@@ -124,7 +124,7 @@ def readConfigFile(city):
 
     return d
 
-
+###############################################################################
 
 def assingVariables(city):
 
@@ -186,8 +186,6 @@ def setup_mongodb(CollectionName):
     return Collection
 
 ###############################################################################
-
-
 
 
 def haversine(lon1, lat1, lon2, lat2):
