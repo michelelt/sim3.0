@@ -25,8 +25,9 @@ from Check_and_run_missing import check_and_run_missing
 
 
 def numeberOfZones(city):
-   command = 'wc -l ../input/'+city+'_car2go_ValidZones.csv'
-   zones = int(str(subprocess.check_output(command, shell=True)).split(" ")[0][2:5]) - 1
+   # command = 'wc -l ../input/'+city+'_car2go_ValidZones.csv'
+   # zones = int(str(subprocess.check_output(command, shell=True)).split(" ")[0][2:5]) - 1
+   zones =261
 
    return zones
 
@@ -58,8 +59,8 @@ def main():
     walkingTreshold = 1000000
     randomInitLvl = False
     kwh_list = [2]
-    # gamma_list = [0, 0.25, 0.5, 0.75, 1]
-    gamma_list = [1, 5, 10]
+    gamma_list = [0, 0.25, 0.5, 0.75, 1]
+    # gamma_list = [1, 5, 10]
 
     
     print("#START Loading#")
@@ -99,6 +100,7 @@ def main():
            print("ERROR: Kerberos Token not present. \n \
            Please log in the bigdata server to request kerberos Token")
            exit(-1)
+    lastS = 57
     print("#END Loading#\n")
 
     print("Ouput in output/Simulation_%d"%lastS)
@@ -172,11 +174,12 @@ def main():
 
     for config in configurations:
 
-      for z in ZoneCars.keys():
-        if len(ZoneCars[z]) > 0:
-            for i in range (len(ZoneCars[z])):
-                ZoneCars[z][i].setRechKwh(config['kwh'])
-                ZoneCars[z][i].setGamma(config['gamma'])
+      # for z in ZoneCars.keys():
+      #   if len(ZoneCars[z]) > 0:
+      #       for i in range (len(ZoneCars[z])):
+      #           ZoneCars[z][i].setRechKwh(config['kwh'])
+      #           config['gamma'] = 666
+      #           ZoneCars[z][i].setGamma(config['gamma
 
       RechargingStation_Zones = loadRecharing(config["Algorithm"], config["numberOfStations"], city)
       p = Process(target=RunSim,args = (config["BestEffort"],
@@ -200,10 +203,13 @@ def main():
                                         city
                                         ))
 
+
       nsimulations +=1
 
       jobs.append(p)
       p.start()
+
+      return
 
       if(len(jobs)>120):
           time.sleep(.1) #only to print after other prints
