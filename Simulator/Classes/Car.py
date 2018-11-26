@@ -32,24 +32,26 @@ class Car(object):
         self.cut_hour_perc = 0.7
         self.reduction_factor_kwh = 0.1
         self.gamma = 0
+        return
 
 
-    def setGamma(self, gamma): self.gamma = gamma
+    def setGamma(self, gamma_par): 
+        self.gamma = gamma_par 
+        return
     def getGamma(self): return self.gamma
 
-    def setRechKwh(self, kwh): self.kwh = kwh
-    def getRechKwh(self): return self.kwh
+    def setRechKwh(self, kwh): 
+        self.kwh = kwh 
+        return
+
+    def getRechKwh(self): return self.kwh 
 
     def setInStation(self):
-        
         self.WasInRecharge = True
-        
         return
 
     def setStartPosition(self, BookingStarting_Position):
-
         self.StartBookingPosition = BookingStarting_Position
-
         return
 
     def setStartRecharge(self, StartRecharge):

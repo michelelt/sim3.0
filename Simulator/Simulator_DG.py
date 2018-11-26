@@ -30,7 +30,7 @@ def SearchAvailableCar(ZoneI,Stamp):
     return ""
 
 
-def SearchNearestBestCar(DistancesFrom_Zone_Ordered,ZoneID_Zone,BookingStarting_Position,Stamp):
+def SearchNearestBestCar(DistancesFrom_Zone_Ordered, ZoneID_Zone, BookingStarting_Position,Stamp):
        
     SelectedCar = ""
     DistanceV = -1
@@ -146,6 +146,7 @@ def RunSim(BestEffort,
     direction,
     city):
 
+
     gv.init()
     sf.assingVariables(city)
 
@@ -172,10 +173,28 @@ def RunSim(BestEffort,
 
     ZoneID_Zone = {}
     
-    ReloadZonesCars(ZoneCars, ZoneID_Zone, AvaiableChargingStations)
-    FillDistancesFrom_Recharging_Zone_Ordered(DistancesFrom_Zone_Ordered,\
+    sf.ReloadZonesCars(ZoneCars, ZoneID_Zone, AvaiableChargingStations)
+    sf.FillDistancesFrom_Recharging_Zone_Ordered(DistancesFrom_Zone_Ordered,\
                                               DistancesFrom_Recharging_Zone_Ordered,\
                                               RechargingStation_Zones)
+    cars = 0
+    for z in ZoneCars.keys():
+        if len(ZoneCars[z]) > 0:
+            for i in range (len(ZoneCars[z])):
+                ZoneCars[z][i].setRechKwh(kwh)
+                ZoneCars[z][i].setGamma(gamma)
+                cars+=1
+    print ('cars', cars)
+
+    # cars = 0
+    # for z in ZoneCars.keys():
+    #     if len(ZoneCars[z]) > 0:
+    #         for i in range (len(ZoneCars[z])):
+    #             print(ZoneCars[z][i].getGamma())
+    #             cars +=1
+
+    # print('cars', cars)
+
             
     if randomStrtingLevel == True :
         for zone in ZoneCars:
@@ -232,11 +251,14 @@ def RunSim(BestEffort,
                                                                    BookingStarting_Position, Stamp)
 
 
+
                 if NearestCar.WasInRecharge == True :
                     occupiedCS -= 1
 
                 Recharge, StartRecharge = NearestCar.Recharge(Stamp)
                 NearestCar.setStartPosition(Event.coordinates)
+                NearestCar.setGamma(gamma)
+                NearestCar.setRechKwh(kwh)
                 BookingID_Car[BookingID] = NearestCar
                 Lvl = NearestCar.getBatteryLvl()
                 ID = NearestCar.getID()
@@ -279,6 +301,7 @@ def RunSim(BestEffort,
                 Lvl, ToRecharge, Recharged, DistanceV, ZoneID, Iter, extractedP = ParkCar(RechargingStation_Zones,DistancesFrom_Zone_Ordered,ZoneID_Zone,\
                                                                        BookingEndPosition, BookedCar, tankThreshold, walkingTreshold, BestEffort,\
                                                                        pThreshold)
+
 
 
                 #extra consuption if there is rerouting
