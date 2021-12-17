@@ -1,3 +1,6 @@
+## Not mantained 
+This project is discontinued since September 2020
+
 # Car sharing simulator
 
 This simulator is a trace-drive simulator which relies on the real data coming from Car2go, a car sharing provider working in 25 cities spread around the world.
